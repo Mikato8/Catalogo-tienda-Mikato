@@ -1,0 +1,41 @@
+import { Alert, Tabs } from 'antd';
+import ProductosAdmin from './ProductosAdmin';
+import CategoriasAdmin from './CategoriasAdmin';
+import PedidosAdmin from './PedidosAdmin';
+
+export default function AdminLayout({ demo = false }) {
+  return (
+    <>
+      <Alert
+        className="config"
+        type={demo ? 'warning' : 'info'}
+        showIcon
+        message={demo ? 'Panel en modo demostración' : 'Panel de administración'}
+        description={
+          demo
+            ? 'Los cambios se mantienen únicamente en esta sesión porque Supabase no está configurado.'
+            : 'Gestiona productos, categorías y estados de pedidos.'
+        }
+      />
+      <Tabs
+        items={[
+          {
+            key: 'productos',
+            label: 'Productos',
+            children: <ProductosAdmin demo={demo} />,
+          },
+          {
+            key: 'categorias',
+            label: 'Categorías',
+            children: <CategoriasAdmin demo={demo} />,
+          },
+          {
+            key: 'pedidos',
+            label: 'Pedidos y tracking',
+            children: <PedidosAdmin demo={demo} />,
+          },
+        ]}
+      />
+    </>
+  );
+}

@@ -1,0 +1,14 @@
+{
+  "name": "erp-mikato",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
+    "build": "npm run build --workspace frontend",
+    "lint": "npm run lint --workspace frontend",
+    "start": "npm run start --workspace backend",
+    "install:all": "npm install"
+  },
+  "devDependencies": {"concurrently": "^9.1.2"}
+}
