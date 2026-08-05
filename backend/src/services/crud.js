@@ -2,7 +2,9 @@ import { supabase } from '../config/supabase.js';
 
 export async function listar(tabla, query = {}) {
   if (!supabase) {
-    return [];
+    const error = new Error('Supabase no configurado: no hay datos disponibles.');
+    error.status = 503;
+    throw error;
   }
 
   let request = supabase.from(tabla).select('*');
