@@ -3,6 +3,17 @@ CHANGELOG ERP Mikato
 
 Registro de cambios del proyecto ERP-Mikato.
 
+[2026-08-10] v1.1.1 — Logging a archivo (errores y eventos)
+--------------------------------------------------------------
+- Nuevo módulo backend/src/lib/logger.js (sin dependencias): escribe en JSON a
+  backend/logs/app-YYYY-MM-DD.log (rotación diaria) y espeja a consola.
+- Niveles: info, warn, error; configurables con LOG_LEVEL.
+- errorMiddleware registra cada error (método, ruta, status, mensaje y stack) en
+  el archivo.
+- server.js registra un evento de arranque (servidor_iniciado).
+- Añadidos LOG_DIR y LOG_LEVEL a backend/.env.example.
+- backend/logs/ añadido a .gitignore.
+
 [2026-08-10] v1.1.0 — Migración a Neon (PostgreSQL) y auth propia
 ------------------------------------------------------------------
 BREAKING: Se elimina Supabase (base de datos, auth y storage).

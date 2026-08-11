@@ -6,4 +6,5 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET || 'cambia-esta-secret-en-produccion',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  logLevel: process.env.LOG_LEVEL || 'info',
 };

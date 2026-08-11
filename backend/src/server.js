@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
 import { errorMiddleware } from './middleware/error.js';
 import { uploadsDir } from './controllers/upload.js';
+import { logInfo } from './lib/logger.js';
 import routes from './routes/index.js';
 
 const app = express();
@@ -45,5 +46,5 @@ app.get('*', (req, res, next) => {
 app.use(errorMiddleware);
 
 app.listen(env.port, () => {
-  console.log(`Servidor Mikato escuchando en ${env.port}`);
+  logInfo('servidor_iniciado', { puerto: env.port });
 });
