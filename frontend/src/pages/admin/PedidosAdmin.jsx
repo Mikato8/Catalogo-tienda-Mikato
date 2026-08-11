@@ -26,10 +26,10 @@ export default function PedidosAdmin({ demo = false }) {
   const [orders, setOrders] = useState(demo ? pedidosDemo : []);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { session } = useAuth();
+  const { token } = useAuth();
   const headers = useMemo(() => (
-    session ? { Authorization: `Bearer ${session.access_token}` } : {}
-  ), [session]);
+    token ? { Authorization: `Bearer ${token}` } : {}
+  ), [token]);
 
   const cargar = useCallback(() => {
     if (!demo) {

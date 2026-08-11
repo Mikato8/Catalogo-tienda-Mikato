@@ -1,43 +1,29 @@
 import { Alert, Button, Card, Form, Input, message } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
-import { configurado, supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Acceso({ registro = false }) {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const { iniciarSesion, registrar } = useAuth();
 
   async function enviar(values) {
-    if (!supabase) {
-      message.warning('Configura las variables de Supabase para activar el acceso.');
-      return;
-    }
-
-    const result = registro
-      ? await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: { data: { full_name: values.name } },
-      })
-      : await supabase.auth.signInWithPassword(values);
-
-    if (result.error) {
-      message.error(result.error.message);
-    } else {
+    try {
+      if (registro) {
+        await registrar({ email: values.email, password: values.password, name: values.name });
+        message.success('Cuenta creada');
+      } else {
+        await iniciarSesion(values.email, values.password);
+      }
       navigate('/');
+    } catch (error) {
+      message.error(error.message);
     }
   }
 
   return (
     <Card className="auth">
       <h1>{registro ? 'Crear cuenta' : 'Bienvenido de nuevo'}</h1>
-      {!configurado && (
-        <Alert
-          message="Supabase no configurado"
-          description="Copia frontend/.env.example a frontend/.env y completa tus credenciales."
-          type="warning"
-          showIcon
-        />
-      )}
       <Form form={form} layout="vertical" onFinish={enviar}>
         {registro && (
           <Form.Item name="name" label="Nombre">
@@ -61,18 +47,14 @@ export default function Acceso({ registro = false }) {
         <Button type="primary" htmlType="submit" block>
           {registro ? 'Registrarme' : 'Ingresar'}
         </Button>
-        {!registro && (
-          <Button
-            block
-            onClick={() => supabase?.auth.signInWithOAuth({
-              provider: 'google',
-              options: { redirectTo: window.location.origin },
-            })}
-          >
-            Continuar con Google
-          </Button>
-        )}
       </Form>
+      <Alert
+        style={{ marginTop: 16 }}
+        type="info"
+        showIcon
+        message="Acceso administrador"
+        description="Pide al administrador que cree tu usuario o asigne el rol 'admin' en la base de datos."
+      />
       <Link to={registro ? '/login' : '/registro'}>
         {registro ? 'Ya tengo una cuenta' : 'Crear una cuenta'}
       </Link>

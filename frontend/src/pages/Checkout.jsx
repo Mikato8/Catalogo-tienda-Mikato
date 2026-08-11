@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 export default function Checkout() {
   const items = useSelector((state) => state.carrito);
   const dispatch = useDispatch();
-  const { session } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
@@ -17,7 +17,7 @@ export default function Checkout() {
       await api('/orders', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...values,

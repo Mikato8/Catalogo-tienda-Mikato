@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
 import { errorMiddleware } from './middleware/error.js';
+import { uploadsDir } from './controllers/upload.js';
 import routes from './routes/index.js';
 
 const app = express();
@@ -25,6 +26,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/v1', routes);
+app.use('/uploads', express.static(uploadsDir));
 app.use(express.static(frontend));
 
 app.get('*', (req, res, next) => {

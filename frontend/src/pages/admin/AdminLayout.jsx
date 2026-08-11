@@ -13,7 +13,7 @@ export default function AdminLayout({ demo = false }) {
         message={demo ? 'Panel en modo demostración' : 'Panel de administración'}
         description={
           demo
-            ? 'Los cambios se mantienen únicamente en esta sesión porque Supabase no está configurado.'
+            ? 'Los cambios se mantienen únicamente en esta sesión porque la base de datos no está configurada.'
             : 'Gestiona productos, categorías y estados de pedidos.'
         }
       />

@@ -1,42 +1,34 @@
-import { supabase } from '../config/supabase.js';
+import jwt from 'jsonwebtoken';
+import { consultar } from '../config/db.js';
+import { env } from '../config/env.js';
 
-export async function verificarJWT(req, res, next) {
+export function verificarJWT(req, res, next) {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
-    if (!token || !supabase) {
-      return res.status(401).json({
-        error: 'Se requiere una sesión válida.',
-      });
+    if (!token) {
+      return res.status(401).json({ error: 'Se requiere una sesión válida.' });
     }
 
-    const { data, error } = await supabase.auth.getUser(token);
-
-    if (error || !data.user) {
-      return res.status(401).json({
-        error: 'Token inválido o expirado.',
-      });
-    }
-
-    req.user = data.user;
+    const payload = jwt.verify(token, env.jwtSecret);
+    req.user = { id: payload.sub, email: payload.email, role: payload.role };
     return next();
   } catch (error) {
-    return next(error);
+    return res.status(401).json({ error: 'Token inválido o expirado.' });
   }
 }
 
 export async function exigirAdmin(req, res, next) {
   try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', req.user.id)
-      .single();
+    const rows = req.user?.role === 'admin'
+      ? [{ id: req.user.id }]
+      : await consultar(
+        'select id from public.users where id = $1 and role = $2',
+        [req.user.id, 'admin'],
+      );
 
-    if (data?.role !== 'admin') {
-      return res.status(403).json({
-        error: 'Se requieren permisos de administrador.',
-      });
+    if (!rows.length) {
+      return res.status(403).json({ error: 'Se requieren permisos de administrador.' });
     }
 
     return next();

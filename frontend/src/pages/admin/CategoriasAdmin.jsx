@@ -18,9 +18,9 @@ export default function CategoriasAdmin({ demo = false }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
-  const { session } = useAuth();
-  const headers = session
-    ? { Authorization: `Bearer ${session.access_token}` }
+  const { token } = useAuth();
+  const headers = token
+    ? { Authorization: `Bearer ${token}` }
     : {};
 
   const cargar = useCallback(() => {

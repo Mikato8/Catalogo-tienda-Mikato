@@ -1,8 +1,7 @@
-import { Alert, Layout } from 'antd';
+import { Layout } from 'antd';
 import { Route, Routes } from 'react-router-dom';
 import Navegacion from './components/Navegacion';
 import { RequireAdmin, RequireAuth } from './components/Proteccion';
-import { configurado } from './lib/supabase';
 import Acceso from './pages/Acceso';
 import AdminLayout from './pages/admin/AdminLayout';
 import Carrito from './pages/Carrito';
@@ -15,30 +14,17 @@ import Tracking from './pages/Tracking';
 const { Content, Footer } = Layout;
 
 export default function App() {
-  const admin = configurado ? (
+  const admin = (
     <RequireAuth>
       <RequireAdmin>
         <AdminLayout />
       </RequireAdmin>
     </RequireAuth>
-  ) : (
-    <AdminLayout demo />
   );
 
   return (
     <Layout>
       <Navegacion />
-      {!configurado && (
-        <Content className="content">
-          <Alert
-            className="config"
-            type="warning"
-            showIcon
-            message="Modo demostración"
-            description="Configura Supabase para activar autenticación, pedidos persistentes y almacenamiento de imágenes."
-          />
-        </Content>
-      )}
       <Content className="content">
         <Routes>
           <Route path="/" element={<Catalogo />} />

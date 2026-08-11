@@ -5,20 +5,30 @@ import {
   Form,
   Input,
   Modal,
+  Select,
   Space,
   Table,
   message,
 } from 'antd';
-import { api } from '../../services/api';
-import { productosDemo } from '../../data/demo';
-import { supabase } from '../../lib/supabase';
+import { api, subirImagen } from '../../services/api';
+import { categoriasDemo, productosDemo } from '../../data/demo';
 import { useAuth } from '../../contexts/AuthContext';
 
-function ProductoForm({ form, setFile, onFinish }) {
+function ProductoForm({ form, setFile, onFinish, categorias }) {
   const fields = ['name', 'sku', 'description', 'image_url', 'price', 'stock'];
 
   return (
     <Form form={form} layout="vertical" onFinish={onFinish}>
+      <Form.Item name="category_id" label="Categoría">
+        <Select
+          allowClear
+          placeholder="Selecciona una categoría"
+          options={categorias.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }))}
+        />
+      </Form.Item>
       {fields.map((field) => (
         <Form.Item
           key={field}
@@ -29,7 +39,7 @@ function ProductoForm({ form, setFile, onFinish }) {
           <Input />
         </Form.Item>
       ))}
-      <Form.Item label="Cargar imagen a Supabase Storage">
+      <Form.Item label="Cargar imagen">
         <input
           type="file"
           accept="image/*"
@@ -45,13 +55,14 @@ function ProductoForm({ form, setFile, onFinish }) {
 
 export default function ProductosAdmin({ demo = false }) {
   const [items, setItems] = useState(demo ? productosDemo : []);
+  const [categorias, setCategorias] = useState(demo ? categoriasDemo : []);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [file, setFile] = useState(null);
   const [form] = Form.useForm();
-  const { session } = useAuth();
-  const headers = session
-    ? { Authorization: `Bearer ${session.access_token}` }
+  const { token } = useAuth();
+  const headers = token
+    ? { Authorization: `Bearer ${token}` }
     : {};
 
   const cargar = useCallback(() => {
@@ -59,6 +70,10 @@ export default function ProductosAdmin({ demo = false }) {
       api('/products')
         .then((response) => setItems(response.data || response))
         .catch(() => setItems([]));
+
+      api('/categories')
+        .then((response) => setCategorias(response.data || response))
+        .catch(() => setCategorias([]));
     }
   }, [demo]);
 
@@ -88,6 +103,7 @@ export default function ProductosAdmin({ demo = false }) {
         price: Number(values.price),
         stock: Number(values.stock || 0),
         image_url: values.image_url || productosDemo[0].image_url,
+        categories: categorias.find((c) => c.id === values.category_id) || null,
       };
 
       setItems((current) => (
@@ -102,19 +118,9 @@ export default function ProductosAdmin({ demo = false }) {
     try {
       let imageUrl = values.image_url;
 
-      if (file && supabase) {
-        const path = `${Date.now()}-${file.name}`;
-        const upload = await supabase.storage
-          .from('product-images')
-          .upload(path, file, { upsert: false });
-
-        if (upload.error) {
-          throw upload.error;
-        }
-
-        imageUrl = supabase.storage
-          .from('product-images')
-          .getPublicUrl(path).data.publicUrl;
+      if (file) {
+        const upload = await subirImagen(file, token);
+        imageUrl = upload.data.url;
       }
 
       await api(editing ? `/products/${editing.id}` : '/products', {
@@ -193,7 +199,12 @@ export default function ProductosAdmin({ demo = false }) {
         footer={null}
         onCancel={() => setOpen(false)}
       >
-        <ProductoForm form={form} setFile={setFile} onFinish={guardar} />
+        <ProductoForm
+          form={form}
+          setFile={setFile}
+          onFinish={guardar}
+          categorias={categorias}
+        />
       </Modal>
     </>
   );

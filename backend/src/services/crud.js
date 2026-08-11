@@ -1,70 +1,76 @@
-import { supabase } from '../config/supabase.js';
+import { consultar } from '../config/db.js';
+
+const CAMPOS_BASE = new Set([
+  'id',
+  'name',
+  'sku',
+  'description',
+  'stock',
+  'production_status',
+  'production_cost',
+  'price',
+  'image_url',
+  'category_id',
+  'active',
+  'slug',
+]);
+
+function asociar(payload) {
+  const keys = Object.keys(payload).filter((key) => (
+    payload[key] !== undefined && CAMPOS_BASE.has(key)
+  ));
+
+  const values = keys.map((key, index) => (
+    payload[key] === null || payload[key] === ''
+      ? null
+      : payload[key]
+  ));
+
+  return {
+    keys,
+    values,
+    placeholders: keys.map((_, index) => `$${index + 1}`),
+  };
+}
 
 export async function listar(tabla, query = {}) {
-  if (!supabase) {
-    const error = new Error('Supabase no configurado: no hay datos disponibles.');
-    error.status = 503;
-    throw error;
+  const clave = Object.keys(query)[0];
+  const activos = Object.entries(query).filter(([key]) => key === 'active');
+
+  let sql = `select * from public.${tabla}`;
+  const params = [];
+
+  if (clave && activos.length) {
+    sql += ' where active = $1';
+    params.push(Boolean(query.active));
   }
 
-  let request = supabase.from(tabla).select('*');
+  sql += ' order by created_at desc';
 
-  Object.entries(query).forEach(([key, value]) => {
-    request = request.eq(key, value);
-  });
-
-  const { data, error } = await request.order(
-    'created_at',
-    { ascending: false },
-  );
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
+  return consultar(sql, params);
 }
 
 export async function crear(tabla, payload) {
-  if (!supabase) {
-    throw new Error('Supabase no está configurado.');
-  }
-
-  const { data, error } = await supabase
-    .from(tabla)
-    .insert(payload)
-    .select()
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
+  const { keys, values, placeholders } = asociar(payload);
+  const sql = `insert into public.${tabla} (${keys.join(', ')}) values (${placeholders.join(', ')}) returning *`;
+  const rows = await consultar(sql, values);
+  return rows[0];
 }
 
 export async function actualizar(tabla, id, payload) {
-  const { data, error } = await supabase
-    .from(tabla)
-    .update(payload)
-    .eq('id', id)
-    .select()
-    .single();
+  const { keys, values } = asociar(payload);
+  const asignaciones = keys.map((key, index) => `${key} = $${index + 1}`);
 
-  if (error) {
-    throw error;
+  if (!asignaciones.length) {
+    const rows = await consultar(`select * from public.${tabla} where id = $1`, [id]);
+    return rows[0];
   }
 
-  return data;
+  const sql = `update public.${tabla} set ${asignaciones.join(', ')}, updated_at = now() where id = $${values.length + 1} returning *`;
+  const rows = await consultar(sql, [...values, id]);
+  return rows[0];
 }
 
 export async function eliminar(tabla, id) {
-  const { error } = await supabase
-    .from(tabla)
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    throw error;
-  }
+  await consultar(`delete from public.${tabla} where id = $1`, [id]);
 }

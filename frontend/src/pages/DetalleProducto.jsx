@@ -22,7 +22,13 @@ export default function DetalleProducto() {
       <h1>{item.name}</h1>
       <p>{item.description}</p>
       <h2>${Number(item.price).toFixed(2)}</h2>
-      <Button type="primary" onClick={() => dispatch(agregar(item))}>
+      <Button
+        type="primary"
+        onClick={() => dispatch(agregar({
+          ...item,
+          price: Number(item.price),
+        }))}
+      >
         Agregar al carrito
       </Button>
     </Card>

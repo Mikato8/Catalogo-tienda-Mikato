@@ -1,28 +1,84 @@
-import { supabase } from '../config/supabase.js';
+import { consultar, pool } from '../config/db.js';
+
+const ESTADOS_VALIDOS = new Set([
+  'pendiente',
+  'confirmado',
+  'en_produccion',
+  'enviado',
+  'entregado',
+  'cancelado',
+]);
 
 export async function listarPedidos(req, res) {
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*, order_items(*)')
-    .eq('user_id', req.user.id)
-    .order('created_at', { ascending: false });
+  const orders = await consultar(
+    'select * from public.orders where user_id = $1 order by created_at desc',
+    [req.user.id],
+  );
 
-  if (error) {
-    throw error;
+  if (!orders.length) {
+    return res.json({ data: [] });
   }
+
+  const ids = orders.map((o) => o.id);
+  const items = await consultar(
+    `select * from public.order_items where order_id = any($1::uuid[])`,
+    [ids],
+  );
+
+  const porPedido = new Map();
+  items.forEach((item) => {
+    if (!porPedido.has(item.order_id)) porPedido.set(item.order_id, []);
+    porPedido.get(item.order_id).push(item);
+  });
+
+  const data = orders.map((order) => ({
+    ...order,
+    order_items: porPedido.get(order.id) || [],
+  }));
 
   res.json({ data });
 }
 
 export async function listarPedidosAdmin(_req, res) {
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*, order_items(*, products(name, sku)), order_tracking(*)')
-    .order('created_at', { ascending: false });
+  const orders = await consultar('select * from public.orders order by created_at desc');
 
-  if (error) {
-    throw error;
+  if (!orders.length) {
+    return res.json({ data: [] });
   }
+
+  const ids = orders.map((o) => o.id);
+
+  const [items, tracking] = await Promise.all([
+    consultar(
+      `select oi.*, json_build_object('name', p.name, 'sku', p.sku) as products
+       from public.order_items oi
+       left join public.products p on p.id = oi.product_id
+       where oi.order_id = any($1::uuid[])`,
+      [ids],
+    ),
+    consultar(
+      'select * from public.order_tracking where order_id = any($1::uuid[]) order by created_at',
+      [ids],
+    ),
+  ]);
+
+  function agrupar(rows, porPedidoFinal) {
+    rows.forEach((row) => {
+      if (!porPedidoFinal.has(row.order_id)) porPedidoFinal.set(row.order_id, []);
+      porPedidoFinal.get(row.order_id).push(row);
+    });
+  }
+
+  const itemsPor = new Map();
+  const trackPor = new Map();
+  agrupar(items, itemsPor);
+  agrupar(tracking, trackPor);
+
+  const data = orders.map((order) => ({
+    ...order,
+    order_items: itemsPor.get(order.id) || [],
+    order_tracking: trackPor.get(order.id) || [],
+  }));
 
   res.json({ data });
 }
@@ -31,84 +87,109 @@ export async function crearPedido(req, res) {
   const { items, shipping_address: shippingAddress } = req.body;
 
   if (!items?.length) {
-    return res.status(400).json({
-      error: 'El pedido debe incluir productos.',
-    });
+    return res.status(400).json({ error: 'El pedido debe incluir productos.' });
   }
 
-  const total = items.reduce(
-    (sum, item) => sum + Number(item.unit_price) * Number(item.quantity),
-    0,
+  if (typeof shippingAddress !== 'string' || !shippingAddress.trim()) {
+    return res.status(400).json({ error: 'La dirección de entrega es obligatoria.' });
+  }
+
+  const cantidades = new Map();
+  items.forEach((item) => {
+    const cantidad = Number(item.quantity);
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+      throw new Error(`Cantidad inválida para el producto ${item.product_id}.`);
+    }
+    cantidades.set(item.product_id, (cantidades.get(item.product_id) || 0) + cantidad);
+  });
+
+  const ids = [...cantidades.keys()];
+  const productos = await consultar(
+    'select id, price, stock from public.products where id = any($1::uuid[])',
+    [ids],
   );
-  const { data: order, error } = await supabase
-    .from('orders')
-    .insert({
-      user_id: req.user.id,
-      total,
-      shipping_address: shippingAddress,
-    })
-    .select()
-    .single();
 
-  if (error) {
+  const dispo = new Map(productos.map((p) => [p.id, p]));
+  let total = 0;
+
+  for (const [productoId, cantidad] of cantidades) {
+    const producto = dispo.get(productoId);
+
+    if (!producto) {
+      return res.status(400).json({ error: `El producto ${productoId} no existe.` });
+    }
+
+    if (cantidad > producto.stock) {
+      return res.status(400).json({ error: `Stock insuficiente para el producto ${productoId}.` });
+    }
+
+    total += Number(producto.price) * cantidad;
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('begin');
+
+    const { rows: orderRows } = await client.query(
+      `insert into public.orders (user_id, total, status, shipping_address)
+       values ($1, $2, $3, $4) returning *`,
+      [req.user.id, total, 'pendiente', shippingAddress],
+    );
+    const order = orderRows[0];
+
+    for (const [productoId, cantidad] of cantidades) {
+      await client.query(
+        `insert into public.order_items (order_id, product_id, quantity, unit_price)
+         values ($1, $2, $3, $4)`,
+        [order.id, productoId, cantidad, dispo.get(productoId).price],
+      );
+
+      await client.query(
+        'update public.products set stock = stock - $1 where id = $2',
+        [cantidad, productoId],
+      );
+    }
+
+    await client.query(
+      'insert into public.order_tracking (order_id, status) values ($1, $2)',
+      [order.id, 'pendiente'],
+    );
+
+    await client.query('commit');
+    return res.status(201).json({ data: order });
+  } catch (error) {
+    await client.query('rollback');
     throw error;
+  } finally {
+    client.release();
   }
-
-  const { error: itemError } = await supabase
-    .from('order_items')
-    .insert(items.map((item) => ({
-      ...item,
-      order_id: order.id,
-    })));
-
-  if (itemError) {
-    throw itemError;
-  }
-
-  await supabase
-    .from('order_tracking')
-    .insert({
-      order_id: order.id,
-      status: 'pendiente',
-    });
-
-  return res.status(201).json({ data: order });
 }
 
 export async function tracking(req, res) {
-  const { data, error } = await supabase
-    .from('order_tracking')
-    .select('*')
-    .eq('order_id', req.params.id)
-    .order('created_at');
-
-  if (error) {
-    throw error;
-  }
-
+  const data = await consultar(
+    'select * from public.order_tracking where order_id = $1 order by created_at',
+    [req.params.id],
+  );
   res.json({ data });
 }
 
 export async function cambiarEstado(req, res) {
   const { status, notes } = req.body;
-  const { data, error } = await supabase
-    .from('orders')
-    .update({ status })
-    .eq('id', req.params.id)
-    .select()
-    .single();
 
-  if (error) {
-    throw error;
+  if (!ESTADOS_VALIDOS.has(status)) {
+    return res.status(400).json({ error: 'Estado de pedido inválido.' });
   }
 
-  await supabase
-    .from('order_tracking')
-    .insert({
-      order_id: req.params.id,
-      status,
-      notes,
-    });
+  const { rows: data } = await pool.query(
+    'update public.orders set status = $1, updated_at = now() where id = $2 returning *',
+    [status, req.params.id],
+  );
 
-  res.json({ data });
+  await pool.query(
+    'insert into public.order_tracking (order_id, status, notes) values ($1, $2, $3)',
+    [req.params.id, status, notes || null],
+  );
+
+  res.json({ data: data[0] });
 }

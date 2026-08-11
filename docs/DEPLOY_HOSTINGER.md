@@ -12,11 +12,9 @@ npm install
 cp frontend/.env.example frontend/.env
 ```
 
-Edita `frontend/.env` con la URL, anon key y URL productiva de la API:
+Edita `frontend/.env` con la URL de la API en producción:
 
 ```env
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_ANON_KEY=tu-clave-anonima
 VITE_API_URL=https://tu-dominio.com/api/v1
 ```
 
@@ -57,8 +55,9 @@ En la configuración de la aplicación Node.js define:
 
 ```env
 PORT=4000
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=tu-clave-de-servicio
+DATABASE_URL=postgresql://usuario:clave@host-pooler.region.neon.tech/neondb?sslmode=require
+JWT_SECRET=una-clave-larga-y-secreta
+JWT_EXPIRES_IN=7d
 CORS_ORIGIN=https://tu-dominio.com
 ```
 
@@ -82,16 +81,13 @@ El script `start` ejecuta `backend/src/server.js`. Express sirve la API bajo
 Hostinger puede asignar dinámicamente el puerto mediante `PORT`. El backend ya
 lee esa variable; no fijes otro puerto en el código.
 
-## 6. Dominio, HTTPS y callbacks
+## 6. Dominio y HTTPS
 
 1. Configura el dominio en Hostinger.
 2. Activa el certificado SSL.
-3. En Supabase actualiza:
-   - **Site URL** con el dominio final.
-   - **Redirect URLs** con `https://tu-dominio.com/**`.
-4. En Google Cloud actualiza la URL de callback de Supabase si cambió el
-   proyecto.
-5. Cambia `CORS_ORIGIN` a la URL exacta del frontend.
+3. Cambia `CORS_ORIGIN` a la URL exacta del frontend.
+4. Ejecuta en Neon `backend/sql/schema.sql` y `backend/sql/seed.sql` si la base
+   de datos aún no tiene el esquema.
 
 ## 7. Comprobaciones posteriores
 
@@ -114,7 +110,6 @@ Después verifica:
 
 - Carga del catálogo.
 - Inicio de sesión por correo.
-- Inicio de sesión con Google.
 - Subida de una imagen desde `/admin`.
 - Creación de un pedido.
 - Cambio de estado y timeline.

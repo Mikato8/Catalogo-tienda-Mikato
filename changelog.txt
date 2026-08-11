@@ -1,0 +1,63 @@
+CHANGELOG ERP Mikato
+====================
+
+Registro de cambios del proyecto ERP-Mikato.
+
+[2026-08-10] v1.1.0 — Migración a Neon (PostgreSQL) y auth propia
+------------------------------------------------------------------
+BREAKING: Se elimina Supabase (base de datos, auth y storage).
+
+Backend
+- Cliente de base de datos con `pg` (Pool) leyendo `DATABASE_URL` (backend/src/config/db.js).
+- Nuevo esquema SQL para Neon en backend/sql/schema.sql y datos de ejemplo en
+  backend/sql/seed.sql (10 productos, 3 categorías). Se elimina el esquema de
+  Supabase (supabase/schema.sql).
+- Autenticación propia por correo/contraseña con JWT (controllers/auth.js):
+  registro, iniciarSesion y miPerfil. Hash de contraseñas con bcryptjs.
+- Middleware de auth reescrito: verificarJWT y exigirAdmin (middleware/auth.js).
+- Servicios de CRUD, catálogo y pedidos reescritos con sentencias parametrizadas
+  (services/crud.js, controllers/catalogo.js, controllers/pedidos.js).
+- Subida de imágenes por API (controllers/upload.js + multer 2.x) guardadas en
+  backend/uploads y servidas por HTTP en /uploads.
+- Rutas nuevas: /auth/registro, /auth/login, /auth/me y /upload (routes/index.js).
+- server.js sirve /uploads como contenido estático.
+
+Frontend
+- lib/supabase.js reemplazado por lib/auth.js (token + usuario en localStorage).
+- AuthContext.jsx: login/registro/perfil contra la API; expone token y usuario.
+- Acceso.jsx: login/registro vía backend; se elimina "Continuar con Google".
+- Proteccion.jsx y Navegacion.jsx: rol admin desde el usuario de la API.
+- ProductosAdmin.jsx: sube imágenes con subirImagen() a POST /upload.
+- App.jsx: la app siempre está configurada; /admin exige login y rol admin.
+- vite.config.js: proxy de /uploads hacia el backend.
+- Se elimina la dependencia @supabase/supabase-js.
+
+Configuración y docs
+- backend/.env con DATABASE_URL de Neon y JWT_SECRET (ignorado por git).
+- backend/.env.example y frontend/.env.example actualizados (sin Supabase).
+- README.md, docs/DEPLOY_HOSTINGER.md y report.md actualizados.
+- Eliminadas supabase/ y docs/SUPABASE_SETUP.md.
+
+Notas
+- Para dar rol admin a un usuario:
+  update public.users set role = 'admin' where email = '...';
+- Cambiar JWT_SECRET por una clave larga en producción.
+
+[2026-08-10] v1.0.1 — Corrección de errores
+-------------------------------------------
+- frontend/src/services/api.js: manejo de respuestas 204 sin cuerpo (el DELETE
+  de productos/categorías ya no lanza error).
+- backend/src/controllers/pedidos.js: crearPedido valida dirección, cantidad,
+  stock y precio real desde la base de datos, y decrementa stock; cambiarEstado
+  valida el estado contra el enum order_status.
+- frontend/src/components/Navegacion.jsx: rol admin leído de la fuente real.
+- frontend/src/pages/DetalleProducto.jsx: Number(item.price) al agregar al carrito.
+- frontend/src/pages/Tracking.jsx: se elimina la lógica demo muerta y se añade
+  estado de carga.
+
+[2026-08-10] v1.0.0 — Versión inicial
+--------------------------------------
+- Catálogo, carrito, checkout, mis pedidos y tracking.
+- Panel de administración (productos, categorías, pedidos).
+- API REST versionada bajo /api/v1 y endpoint /api/health.
+- Arquitectura inicial sobre Supabase (reemplazada en v1.1.0).

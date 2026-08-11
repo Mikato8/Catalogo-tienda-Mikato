@@ -1,7 +1,6 @@
 import { Badge, Button, Layout, Menu, Space } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { configurado } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Header } = Layout;
@@ -11,7 +10,7 @@ export default function Navegacion() {
   const cantidad = useSelector((state) => (
     state.carrito.reduce((total, item) => total + item.cantidad, 0)
   ));
-  const mostrarAdmin = !configurado || usuario?.user_metadata?.role === 'admin';
+  const mostrarAdmin = usuario?.role === 'admin';
 
   const items = [
     {

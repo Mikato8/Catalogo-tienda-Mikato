@@ -1,37 +1,89 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { configurado, supabase } from '../lib/supabase';
+import { api } from '../services/api';
+import {
+  borrarSesion,
+  guardarSesion,
+  leerToken,
+  leerUsuario,
+} from '../lib/auth';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null);
-  const [cargando, setCargando] = useState(configurado);
+  const [usuario, setUsuario] = useState(() => leerUsuario());
+  const [token, setToken] = useState(() => leerToken());
+  const [cargando, setCargando] = useState(Boolean(leerToken()));
 
   useEffect(() => {
-    if (!supabase) {
+    let activo = true;
+
+    if (!token) {
+      setCargando(false);
       return undefined;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setCargando(false);
+    api('/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => {
+        const perfil = response.data?.usuario || response.usuario;
+        if (activo) {
+          setUsuario(perfil);
+          guardarSesion(token, perfil);
+        }
+      })
+      .catch(() => {
+        if (activo) {
+          borrarSesion();
+          setUsuario(null);
+          setToken(null);
+        }
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => { activo = false; };
+  }, [token]);
+
+  async function iniciarSesion(email, password) {
+    const response = await api('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     });
+    const { token: nuevoToken, usuario: nuevoUsuario } = response.data;
+    guardarSesion(nuevoToken, nuevoUsuario);
+    setToken(nuevoToken);
+    setUsuario(nuevoUsuario);
+    return nuevoUsuario;
+  }
 
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
+  async function registrar({ email, password, name }) {
+    const response = await api('/auth/registro', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
     });
+    const { token: nuevoToken, usuario: nuevoUsuario } = response.data;
+    guardarSesion(nuevoToken, nuevoUsuario);
+    setToken(nuevoToken);
+    setUsuario(nuevoUsuario);
+    return nuevoUsuario;
+  }
 
-    return () => data.subscription.unsubscribe();
-  }, []);
-
-  const cerrarSesion = () => supabase?.auth.signOut();
+  function cerrarSesion() {
+    borrarSesion();
+    setToken(null);
+    setUsuario(null);
+  }
 
   return (
     <AuthContext.Provider
       value={{
-        session,
-        usuario: session?.user,
+        token,
+        usuario,
         cargando,
+        iniciarSesion,
+        registrar,
         cerrarSesion,
       }}
     >

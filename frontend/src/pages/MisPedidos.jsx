@@ -6,15 +6,15 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function MisPedidos() {
   const [orders, setOrders] = useState([]);
-  const { session } = useAuth();
+  const { token } = useAuth();
 
   useEffect(() => {
     api('/orders', {
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => setOrders(response.data || response))
       .catch(() => {});
-  }, [session]);
+  }, [token]);
 
   return (
     <Card title="Mis pedidos">
