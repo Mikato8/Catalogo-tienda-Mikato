@@ -93,11 +93,23 @@ export default function PedidosAdmin({ demo = false }) {
   }
 
   function detalle(order) {
+    const tieneDatosEnvio = order.customer_name || order.street || order.city || order.colonia;
+    const envio = tieneDatosEnvio ? (
+      <div>
+        {order.customer_name && <div><strong>{order.customer_name}</strong></div>}
+        <div>{[order.street, order.street_number].filter(Boolean).join(' ')}</div>
+        {order.colonia && <div>{order.colonia}</div>}
+        <div>{[order.city, order.state, order.postal_code].filter(Boolean).join(', ')}</div>
+        {order.email && <div>Correo: {order.email}</div>}
+        {order.phone && <div>Celular: {order.phone}</div>}
+      </div>
+    ) : (order.shipping_address || 'No indicada');
+
     return (
       <div className="order-detail">
         <Descriptions size="small" column={1} bordered>
           <Descriptions.Item label="Dirección">
-            {order.shipping_address || 'No indicada'}
+            {envio}
           </Descriptions.Item>
           <Descriptions.Item label="Productos">
             {(order.order_items || []).map((item) => (

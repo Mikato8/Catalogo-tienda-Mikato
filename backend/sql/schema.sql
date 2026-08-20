@@ -55,6 +55,15 @@ create table if not exists public.orders (
   status public.order_status not null default 'pendiente',
   total numeric(12, 2) not null default 0,
   shipping_address text not null,
+  customer_name text,
+  street text,
+  street_number text,
+  colonia text,
+  city text,
+  state text,
+  postal_code text,
+  email text,
+  phone text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

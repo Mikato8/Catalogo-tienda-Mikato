@@ -84,15 +84,53 @@ export async function listarPedidosAdmin(_req, res) {
 }
 
 export async function crearPedido(req, res) {
-  const { items, shipping_address: shippingAddress } = req.body;
+  const {
+    items,
+    customer_name: customerName,
+    street,
+    street_number: streetNumber,
+    colonia,
+    city,
+    state,
+    postal_code: postalCode,
+    email,
+    phone,
+  } = req.body;
 
   if (!items?.length) {
     return res.status(400).json({ error: 'El pedido debe incluir productos.' });
   }
 
-  if (typeof shippingAddress !== 'string' || !shippingAddress.trim()) {
-    return res.status(400).json({ error: 'La dirección de entrega es obligatoria.' });
+  const camposEnvio = {
+    nombre: customerName,
+    calle: street,
+    número: streetNumber,
+    colonia,
+    ciudad: city,
+    estado: state,
+    'código postal': postalCode,
+    'correo electrónico': email,
+    celular: phone,
+  };
+
+  const faltantes = Object.entries(camposEnvio)
+    .filter(([, valor]) => typeof valor !== 'string' || !valor.trim())
+    .map(([clave]) => clave);
+
+  if (faltantes.length) {
+    return res.status(400).json({
+      error: `Faltan datos de envío: ${faltantes.join(', ')}.`,
+    });
   }
+
+  const shippingAddress = [
+    customerName.trim(),
+    `${street.trim()} ${streetNumber.trim()}`,
+    colonia.trim(),
+    `${city.trim()}, ${state.trim()} ${postalCode.trim()}`,
+    `Correo: ${email.trim()}`,
+    `Celular: ${phone.trim()}`,
+  ].join('\n');
 
   const cantidades = new Map();
   items.forEach((item) => {
@@ -132,9 +170,24 @@ export async function crearPedido(req, res) {
     await client.query('begin');
 
     const { rows: orderRows } = await client.query(
-      `insert into public.orders (user_id, total, status, shipping_address)
-       values ($1, $2, $3, $4) returning *`,
-      [req.user.id, total, 'pendiente', shippingAddress],
+      `insert into public.orders
+        (user_id, total, status, shipping_address, customer_name, street, street_number, colonia, city, state, postal_code, email, phone)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning *`,
+      [
+        req.user.id,
+        total,
+        'pendiente',
+        shippingAddress,
+        customerName.trim(),
+        street.trim(),
+        streetNumber.trim(),
+        colonia.trim(),
+        city.trim(),
+        state.trim(),
+        postalCode.trim(),
+        email.trim(),
+        phone.trim(),
+      ],
     );
     const order = orderRows[0];
 
