@@ -25,8 +25,16 @@ export async function categorias(_req, res) {
   });
 }
 
+function generarSku() {
+  return `PROD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+}
+
 export async function crearProducto(req, res) {
-  res.status(201).json({ data: await crear('products', req.body) });
+  const body = { ...req.body };
+  if (!body.sku || String(body.sku).trim() === '') {
+    body.sku = generarSku();
+  }
+  res.status(201).json({ data: await crear('products', body) });
 }
 
 export async function crearCategoria(req, res) {
@@ -34,7 +42,11 @@ export async function crearCategoria(req, res) {
 }
 
 export async function actualizarProducto(req, res) {
-  res.json({ data: await actualizar('products', req.params.id, req.body) });
+  const body = { ...req.body };
+  if (body.sku !== undefined && String(body.sku).trim() === '') {
+    delete body.sku;
+  }
+  res.json({ data: await actualizar('products', req.params.id, body) });
 }
 
 export async function eliminarProducto(req, res) {
