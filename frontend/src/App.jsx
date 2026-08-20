@@ -58,7 +58,9 @@ export default function App() {
       </main>
       <footer className="footer">
         <div className="footer-inner">
-          <span className="footer-logo">MIKATO</span>
+          <a className="footer-logo" href="/">
+            <img alt="Mikato Logo" src="/logo.jpg" />
+          </a>
           <p>
             Mikato © {new Date().getFullYear()} · Comercio con intención
           </p>

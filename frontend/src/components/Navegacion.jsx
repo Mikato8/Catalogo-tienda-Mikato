@@ -17,7 +17,9 @@ export default function Navegacion() {
   return (
     <nav className="nav">
       <div className="nav-inner">
-        <Link className="nav-logo" to="/">MIKATO</Link>
+        <Link className="nav-logo" to="/">
+          <img alt="Mikato Logo" src="/logo.jpg" />
+        </Link>
 
         <div className="nav-links">
           <Link className={enlaceActivo('/')} to="/">Catálogo</Link>

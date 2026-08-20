@@ -74,11 +74,13 @@ body {
 
 .nav-logo {
   flex-shrink: 0;
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 4px;
-  color: var(--primary);
-  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.nav-logo img {
+  height: 32px;
+  object-fit: contain;
 }
 
 .nav-links {
@@ -475,11 +477,20 @@ body {
 }
 
 .footer-logo {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--secondary);
+  display: flex;
+  align-items: center;
+}
+
+.footer-logo img {
+  height: 24px;
+  opacity: 0.6;
+  filter: grayscale(1);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.footer-logo:hover img {
   opacity: 0.9;
-  letter-spacing: 4px;
+  filter: grayscale(0);
 }
 
 .footer p {
