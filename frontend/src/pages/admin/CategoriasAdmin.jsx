@@ -110,7 +110,6 @@ export default function CategoriasAdmin({ demo = false }) {
           dataSource={items}
           columns={[
             { title: 'Nombre', dataIndex: 'name' },
-            { title: 'Slug', dataIndex: 'slug' },
             { title: 'Descripción', dataIndex: 'description' },
             {
               title: 'Acciones',
@@ -134,13 +133,6 @@ export default function CategoriasAdmin({ demo = false }) {
           <Form.Item
             name="name"
             label="Nombre"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="slug"
-            label="Slug"
             rules={[{ required: true }]}
           >
             <Input />

@@ -29,6 +29,17 @@ function generarSku() {
   return `PROD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
+function generarSlug(nombre) {
+  const base = String(nombre || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return base || `categoria-${Date.now().toString(36)}`;
+}
+
 export async function crearProducto(req, res) {
   const body = { ...req.body };
   if (!body.sku || String(body.sku).trim() === '') {
@@ -38,7 +49,11 @@ export async function crearProducto(req, res) {
 }
 
 export async function crearCategoria(req, res) {
-  res.status(201).json({ data: await crear('categories', req.body) });
+  const body = { ...req.body };
+  if (!body.slug || String(body.slug).trim() === '') {
+    body.slug = generarSlug(body.name);
+  }
+  res.status(201).json({ data: await crear('categories', body) });
 }
 
 export async function actualizarProducto(req, res) {
@@ -55,7 +70,11 @@ export async function eliminarProducto(req, res) {
 }
 
 export async function actualizarCategoria(req, res) {
-  res.json({ data: await actualizar('categories', req.params.id, req.body) });
+  const body = { ...req.body };
+  if (body.slug !== undefined && String(body.slug).trim() === '') {
+    delete body.slug;
+  }
+  res.json({ data: await actualizar('categories', req.params.id, body) });
 }
 
 export async function eliminarCategoria(req, res) {
