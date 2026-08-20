@@ -91,3 +91,13 @@ create index if not exists orders_user_id_idx on public.orders(user_id);
 create index if not exists orders_status_idx on public.orders(status);
 create index if not exists order_items_order_id_idx on public.order_items(order_id);
 create index if not exists order_tracking_order_id_idx on public.order_tracking(order_id);
+
+-- Imágenes (se guardan en la base de datos para no depender del disco)
+create table if not exists public.images (
+  id uuid primary key default gen_random_uuid(),
+  data bytea not null,
+  mime_type text not null,
+  filename text,
+  size integer,
+  created_at timestamptz not null default now()
+);

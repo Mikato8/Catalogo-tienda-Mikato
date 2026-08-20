@@ -1,7 +1,4 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 import { Router } from 'express';
 import {
   actualizarCategoria,
@@ -14,7 +11,7 @@ import {
   productos,
 } from '../controllers/catalogo.js';
 import { miPerfil, iniciarSesion, registrar } from '../controllers/auth.js';
-import { subirImagen, uploadsDir } from '../controllers/upload.js';
+import { subirImagen, obtenerImagen } from '../controllers/upload.js';
 import {
   cambiarEstado,
   crearPedido,
@@ -26,22 +23,9 @@ import { exigirAdmin, verificarJWT } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error.js';
 
 const router = Router();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
-});
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
@@ -53,6 +37,7 @@ router.get('/auth/me', verificarJWT, asyncHandler(miPerfil));
 // Catálogo público
 router.get('/products', asyncHandler(productos));
 router.get('/categories', asyncHandler(categorias));
+router.get('/images/:id', asyncHandler(obtenerImagen));
 
 // Subida de imágenes (solo administradores)
 router.post(
