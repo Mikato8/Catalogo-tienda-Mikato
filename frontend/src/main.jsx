@@ -14,7 +14,7 @@ const theme = {
     colorInfo: '#006877',
     colorLink: '#006877',
     borderRadius: 6,
-    fontFamily: "'Manrope', 'Inter', system-ui, sans-serif",
+    fontFamily: "'Inter', system-ui, sans-serif",
     colorBgLayout: '#f9f9ff',
   },
 };

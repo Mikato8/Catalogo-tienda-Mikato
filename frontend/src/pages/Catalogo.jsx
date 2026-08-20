@@ -30,10 +30,11 @@ export default function Catalogo() {
           <div className="hero-bg" />
           <div className="hero-content">
             <span className="eyebrow">Productos de gran calidad</span>
-            <h1>Objetos que hacen hogar.</h1>
+            <h1>Mikato productos para mascotas</h1>
             <p>
-              Descubre piezas Mikato creadas para acompañar tus momentos
-              cotidianos.
+              Mikato son productos elaborados en Guadalajara Jal.
+              <br />
+              Whatsapp 3324333262
             </p>
           </div>
         </div>
