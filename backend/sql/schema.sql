@@ -30,7 +30,8 @@ create table if not exists public.categories (
   slug text unique not null,
   description text,
   active boolean not null default true,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.products (
