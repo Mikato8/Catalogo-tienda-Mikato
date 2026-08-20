@@ -3,6 +3,7 @@ import ProductosAdmin from './ProductosAdmin';
 import CategoriasAdmin from './CategoriasAdmin';
 import PedidosAdmin from './PedidosAdmin';
 import ConfiguracionAdmin from './ConfiguracionAdmin';
+import UsuariosAdmin from './UsuariosAdmin';
 
 export default function AdminLayout({ demo = false }) {
   return (
@@ -34,6 +35,11 @@ export default function AdminLayout({ demo = false }) {
             key: 'pedidos',
             label: 'Pedidos y tracking',
             children: <PedidosAdmin demo={demo} />,
+          },
+          {
+            key: 'usuarios',
+            label: 'Usuarios',
+            children: <UsuariosAdmin />,
           },
           {
             key: 'configuracion',

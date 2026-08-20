@@ -14,6 +14,12 @@ import { miPerfil, iniciarSesion, registrar } from '../controllers/auth.js';
 import { subirImagen, obtenerImagen } from '../controllers/upload.js';
 import { obtenerConfiguracion, actualizarConfiguracion } from '../controllers/settings.js';
 import {
+  actualizarUsuario,
+  crearUsuario,
+  eliminarUsuario,
+  listarUsuarios,
+} from '../controllers/usuarios.js';
+import {
   cambiarEstado,
   crearPedido,
   listarPedidos,
@@ -60,6 +66,12 @@ router.delete('/categories/:id', verificarJWT, exigirAdmin, asyncHandler(elimina
 
 // Configuración visual del sitio (solo administradores)
 router.put('/settings', verificarJWT, exigirAdmin, asyncHandler(actualizarConfiguracion));
+
+// Gestión de usuarios (solo administradores)
+router.get('/admin/users', verificarJWT, exigirAdmin, asyncHandler(listarUsuarios));
+router.post('/admin/users', verificarJWT, exigirAdmin, asyncHandler(crearUsuario));
+router.patch('/admin/users/:id', verificarJWT, exigirAdmin, asyncHandler(actualizarUsuario));
+router.delete('/admin/users/:id', verificarJWT, exigirAdmin, asyncHandler(eliminarUsuario));
 
 // Pedidos
 router.get('/orders', verificarJWT, asyncHandler(listarPedidos));
