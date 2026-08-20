@@ -2,6 +2,7 @@ import { Alert, Tabs } from 'antd';
 import ProductosAdmin from './ProductosAdmin';
 import CategoriasAdmin from './CategoriasAdmin';
 import PedidosAdmin from './PedidosAdmin';
+import ConfiguracionAdmin from './ConfiguracionAdmin';
 
 export default function AdminLayout({ demo = false }) {
   return (
@@ -14,7 +15,7 @@ export default function AdminLayout({ demo = false }) {
         description={
           demo
             ? 'Los cambios se mantienen únicamente en esta sesión porque la base de datos no está configurada.'
-            : 'Gestiona productos, categorías y estados de pedidos.'
+            : 'Gestiona productos, categorías, pedidos y la apariencia del sitio.'
         }
       />
       <Tabs
@@ -33,6 +34,11 @@ export default function AdminLayout({ demo = false }) {
             key: 'pedidos',
             label: 'Pedidos y tracking',
             children: <PedidosAdmin demo={demo} />,
+          },
+          {
+            key: 'configuracion',
+            label: 'Configuración',
+            children: <ConfiguracionAdmin />,
           },
         ]}
       />

@@ -101,3 +101,14 @@ create table if not exists public.images (
   size integer,
   created_at timestamptz not null default now()
 );
+
+-- Configuración visual del sitio (paleta y tipografía), editable solo por admin
+create table if not exists public.site_settings (
+  id integer primary key default 1 check (id = 1),
+  primary_color text not null default '#006877',
+  font_family text not null default 'Inter',
+  updated_at timestamptz not null default now()
+);
+
+insert into public.site_settings (id) values (1)
+on conflict (id) do nothing;

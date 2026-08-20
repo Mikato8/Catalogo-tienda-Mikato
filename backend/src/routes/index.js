@@ -12,6 +12,7 @@ import {
 } from '../controllers/catalogo.js';
 import { miPerfil, iniciarSesion, registrar } from '../controllers/auth.js';
 import { subirImagen, obtenerImagen } from '../controllers/upload.js';
+import { obtenerConfiguracion, actualizarConfiguracion } from '../controllers/settings.js';
 import {
   cambiarEstado,
   crearPedido,
@@ -38,6 +39,7 @@ router.get('/auth/me', verificarJWT, asyncHandler(miPerfil));
 router.get('/products', asyncHandler(productos));
 router.get('/categories', asyncHandler(categorias));
 router.get('/images/:id', asyncHandler(obtenerImagen));
+router.get('/settings', asyncHandler(obtenerConfiguracion));
 
 // Subida de imágenes (solo administradores)
 router.post(
@@ -55,6 +57,9 @@ router.patch('/products/:id', verificarJWT, exigirAdmin, asyncHandler(actualizar
 router.delete('/products/:id', verificarJWT, exigirAdmin, asyncHandler(eliminarProducto));
 router.patch('/categories/:id', verificarJWT, exigirAdmin, asyncHandler(actualizarCategoria));
 router.delete('/categories/:id', verificarJWT, exigirAdmin, asyncHandler(eliminarCategoria));
+
+// Configuración visual del sitio (solo administradores)
+router.put('/settings', verificarJWT, exigirAdmin, asyncHandler(actualizarConfiguracion));
 
 // Pedidos
 router.get('/orders', verificarJWT, asyncHandler(listarPedidos));
