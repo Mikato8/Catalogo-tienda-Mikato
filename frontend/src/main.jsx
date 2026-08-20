@@ -10,10 +10,12 @@ import './styles.css';
 
 const theme = {
   token: {
-    colorPrimary: '#167c80',
-    colorInfo: '#167c80',
-    borderRadius: 10,
-    fontFamily: 'Inter, system-ui, sans-serif',
+    colorPrimary: '#006877',
+    colorInfo: '#006877',
+    colorLink: '#006877',
+    borderRadius: 6,
+    fontFamily: "'Manrope', 'Inter', system-ui, sans-serif",
+    colorBgLayout: '#f9f9ff',
   },
 };
 

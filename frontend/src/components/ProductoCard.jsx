@@ -1,40 +1,40 @@
-import { Button, Card, Tag } from 'antd';
-import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { agregar } from '../store/carritoSlice';
 
 export default function ProductoCard({ item }) {
   const dispatch = useDispatch();
 
   return (
-    <Card
-      hoverable
-      cover={<img alt={item.name} src={item.image_url} />}
-      actions={[
-        <Link key="detalle" to={`/producto/${item.id}`}>
+    <article className="product-card">
+      <Link className="product-card-media" to={`/producto/${item.id}`}>
+        <img alt={item.name} src={item.image_url} loading="lazy" />
+      </Link>
+
+      <div className="product-card-body">
+        <span className="product-card-cat">
+          {item.categories?.name || 'General'}
+        </span>
+        <Link className="product-card-name" to={`/producto/${item.id}`}>
+          {item.name}
+        </Link>
+        <span className="product-card-price">
+          ${Number(item.price).toFixed(2)}
+        </span>
+      </div>
+
+      <div className="product-card-actions">
+        <Link className="btn btn-outline" to={`/producto/${item.id}`}>
           Ver detalle
-        </Link>,
-        <Button
-          key="agregar"
-          type="link"
-          onClick={() => dispatch(agregar({
-            ...item,
-            price: Number(item.price),
-          }))}
+        </Link>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => dispatch(agregar({ ...item, price: Number(item.price) }))}
         >
           Agregar
-        </Button>,
-      ]}
-    >
-      <Card.Meta
-        title={item.name}
-        description={(
-          <>
-            <Tag>{item.categories?.name || 'General'}</Tag>
-            <strong>${Number(item.price).toFixed(2)}</strong>
-          </>
-        )}
-      />
-    </Card>
+        </button>
+      </div>
+    </article>
   );
 }

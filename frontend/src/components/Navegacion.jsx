@@ -1,53 +1,52 @@
-import { Badge, Button, Layout, Menu, Space } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 
-const { Header } = Layout;
-
 export default function Navegacion() {
   const { usuario, cerrarSesion } = useAuth();
+  const location = useLocation();
   const cantidad = useSelector((state) => (
     state.carrito.reduce((total, item) => total + item.cantidad, 0)
   ));
-  const mostrarAdmin = usuario?.role === 'admin';
+  const esAdmin = usuario?.role === 'admin';
 
-  const items = [
-    {
-      key: 'catalogo',
-      label: <Link to="/">Catálogo</Link>,
-    },
-    {
-      key: 'pedidos',
-      label: <Link to="/pedidos">Mis pedidos</Link>,
-    },
-  ];
-
-  if (mostrarAdmin) {
-    items.push({
-      key: 'admin',
-      label: <Link to="/admin">Administración</Link>,
-    });
-  }
+  const enlaceActivo = (ruta) => (
+    location.pathname === ruta ? 'nav-link nav-link--active' : 'nav-link'
+  );
 
   return (
-    <Header className="header">
-      <Link className="logo" to="/">MIKATO</Link>
-      <Menu mode="horizontal" theme="dark" items={items} />
-      <Space>
-        <Link to="/carrito">
-          <Badge count={cantidad} showZero>
-            <Button>Carrito</Button>
-          </Badge>
-        </Link>
-        {usuario ? (
-          <Button onClick={cerrarSesion}>Salir</Button>
-        ) : (
-          <Link to="/login">
-            <Button type="primary">Ingresar</Button>
+    <nav className="nav">
+      <div className="nav-inner">
+        <Link className="nav-logo" to="/">MIKATO</Link>
+
+        <div className="nav-links">
+          <Link className={enlaceActivo('/')} to="/">Catálogo</Link>
+          <Link className={enlaceActivo('/pedidos')} to="/pedidos">Mis pedidos</Link>
+          {esAdmin && (
+            <Link className={enlaceActivo('/admin')} to="/admin">Administración</Link>
+          )}
+        </div>
+
+        <div className="nav-actions">
+          <Link className="nav-cart" to="/carrito">
+            <span className="material-symbols-outlined">shopping_cart</span>
+            <span className="nav-cart-label">Carrito</span>
+            <span className="nav-cart-badge">{cantidad}</span>
           </Link>
-        )}
-      </Space>
-    </Header>
+
+          {usuario ? (
+            <button type="button" className="btn btn-primary" onClick={cerrarSesion}>
+              <span className="material-symbols-outlined">logout</span>
+              Salir
+            </button>
+          ) : (
+            <Link className="btn btn-primary" to="/login">
+              <span className="material-symbols-outlined">person</span>
+              Ingresar
+            </Link>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 }

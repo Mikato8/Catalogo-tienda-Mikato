@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Input, Select } from 'antd';
 import { api } from '../services/api';
 import { productosDemo } from '../data/demo';
 import ProductoCard from '../components/ProductoCard';
@@ -18,6 +17,7 @@ export default function Catalogo() {
   const categorias = [
     ...new Set(items.map((item) => item.categories?.name).filter(Boolean)),
   ];
+
   const filtrados = items.filter((item) => (
     item.name.toLowerCase().includes(texto.toLowerCase())
     && (categoria === 'todas' || item.categories?.name === categoria)
@@ -26,34 +26,48 @@ export default function Catalogo() {
   return (
     <>
       <section className="hero">
-        <div>
-          <p className="eyebrow">PRODUCIDO Y COMERCIALIZADO CON PROPÓSITO</p>
-          <h1>Objetos que hacen hogar.</h1>
-          <p>
-            Descubre piezas Mikato creadas para acompañar tus momentos
-            cotidianos.
-          </p>
+        <div className="hero-card">
+          <div className="hero-bg" />
+          <div className="hero-content">
+            <span className="eyebrow">Productos de gran calidad</span>
+            <h1>Objetos que hacen hogar.</h1>
+            <p>
+              Descubre piezas Mikato creadas para acompañar tus momentos
+              cotidianos.
+            </p>
+          </div>
         </div>
       </section>
-      <div className="toolbar">
-        <Input.Search
-          placeholder="Buscar productos..."
-          onChange={(event) => setTexto(event.target.value)}
-        />
-        <Select
-          value={categoria}
-          onChange={setCategoria}
-          options={[
-            { value: 'todas', label: 'Todas las categorías' },
-            ...categorias.map((item) => ({ value: item, label: item })),
-          ]}
-        />
-      </div>
-      <div className="grid">
+
+      <section className="toolbar">
+        <div className="search">
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            value={texto}
+            onChange={(event) => setTexto(event.target.value)}
+          />
+          <span className="material-symbols-outlined">search</span>
+        </div>
+        <div className="filter">
+          <select
+            value={categoria}
+            onChange={(event) => setCategoria(event.target.value)}
+          >
+            <option value="todas">Todas las categorías</option>
+            {categorias.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </select>
+          <span className="material-symbols-outlined">expand_more</span>
+        </div>
+      </section>
+
+      <section className="grid">
         {filtrados.map((item) => (
           <ProductoCard key={item.id} item={item} />
         ))}
-      </div>
+      </section>
     </>
   );
 }

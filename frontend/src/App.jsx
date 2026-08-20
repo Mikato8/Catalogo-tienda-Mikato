@@ -1,4 +1,3 @@
-import { Layout } from 'antd';
 import { Route, Routes } from 'react-router-dom';
 import Navegacion from './components/Navegacion';
 import { RequireAdmin, RequireAuth } from './components/Proteccion';
@@ -11,8 +10,6 @@ import DetalleProducto from './pages/DetalleProducto';
 import MisPedidos from './pages/MisPedidos';
 import Tracking from './pages/Tracking';
 
-const { Content, Footer } = Layout;
-
 export default function App() {
   const admin = (
     <RequireAuth>
@@ -23,9 +20,9 @@ export default function App() {
   );
 
   return (
-    <Layout>
+    <div className="app">
       <Navegacion />
-      <Content className="content">
+      <main className="main">
         <Routes>
           <Route path="/" element={<Catalogo />} />
           <Route path="/producto/:id" element={<DetalleProducto />} />
@@ -58,10 +55,15 @@ export default function App() {
           />
           <Route path="/admin" element={admin} />
         </Routes>
-      </Content>
-      <Footer>
-        Mikato © {new Date().getFullYear()} · Comercio con intención
-      </Footer>
-    </Layout>
+      </main>
+      <footer className="footer">
+        <div className="footer-inner">
+          <span className="footer-logo">MIKATO</span>
+          <p>
+            Mikato © {new Date().getFullYear()} · Comercio con intención
+          </p>
+        </div>
+      </footer>
+    </div>
   );
 }
