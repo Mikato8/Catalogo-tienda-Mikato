@@ -8,7 +8,6 @@ export default function Navegacion() {
   const cantidad = useSelector((state) => (
     state.carrito.reduce((total, item) => total + item.cantidad, 0)
   ));
-  const esAdmin = usuario?.role === 'admin';
 
   const enlaceActivo = (ruta) => (
     location.pathname === ruta ? 'nav-link nav-link--active' : 'nav-link'
@@ -24,9 +23,6 @@ export default function Navegacion() {
         <div className="nav-links">
           <Link className={enlaceActivo('/')} to="/">Catálogo</Link>
           <Link className={enlaceActivo('/pedidos')} to="/pedidos">Mis pedidos</Link>
-          {esAdmin && (
-            <Link className={enlaceActivo('/admin')} to="/admin">Administración</Link>
-          )}
         </div>
 
         <div className="nav-actions">
