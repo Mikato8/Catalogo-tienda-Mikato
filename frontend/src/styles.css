@@ -255,6 +255,10 @@ body {
   margin: 0;
 }
 
+.hero-description {
+  font-weight: 600;
+}
+
 /* ---------- Barra de búsqueda y filtro ---------- */
 .toolbar {
   display: flex;
