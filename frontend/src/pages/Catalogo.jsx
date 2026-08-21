@@ -31,7 +31,7 @@ export default function Catalogo() {
           <div className="hero-content">
             <span className="eyebrow">Productos de gran calidad</span>
             <h1>Mikato productos para mascotas</h1>
-            <p>
+            <p className="hero-description">
               Mikato son productos elaborados en Guadalajara Jal.
               <br />
               Whatsapp 3324333262
