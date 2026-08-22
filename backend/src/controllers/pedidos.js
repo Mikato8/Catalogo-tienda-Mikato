@@ -9,6 +9,12 @@ const ESTADOS_VALIDOS = new Set([
   'cancelado',
 ]);
 
+const COSTOS_ENVIO = {
+  'Recoger en tienda': 0,
+  'Envío local': 50,
+  'Envío por paquetería': 120,
+};
+
 export async function listarPedidos(req, res) {
   const orders = await consultar(
     'select * from public.orders where user_id = $1 order by created_at desc',
@@ -100,8 +106,9 @@ export async function crearPedido(req, res) {
     shipping_method: shippingMethod = null,
   } = req.body;
 
-  const ESTADOS_PAGO = new Set(['pendiente', 'recibido', 'rechazado']);
+  const ESTADOS_PAGO = new Set(['pendiente', 'realizado']);
   const estadoPago = ESTADOS_PAGO.has(paymentStatus) ? paymentStatus : 'pendiente';
+  const shippingCost = Number(COSTOS_ENVIO[shippingMethod] ?? 0);
 
   if (!items?.length) {
     return res.status(400).json({ error: 'El pedido debe incluir productos.' });
@@ -170,6 +177,8 @@ export async function crearPedido(req, res) {
     total += Number(producto.price) * cantidad;
   }
 
+  const totalConEnvio = total + shippingCost;
+
   const client = await pool.connect();
 
   try {
@@ -177,11 +186,11 @@ export async function crearPedido(req, res) {
 
     const { rows: orderRows } = await client.query(
       `insert into public.orders
-        (user_id, total, status, shipping_address, customer_name, street, street_number, colonia, city, state, postal_code, email, phone, payment_method, payment_status, shipping_method)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) returning *`,
+        (user_id, total, status, shipping_address, customer_name, street, street_number, colonia, city, state, postal_code, email, phone, payment_method, payment_status, shipping_method, shipping_status, shipping_cost)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) returning *`,
       [
         req.user.id,
-        total,
+        totalConEnvio,
         'pendiente',
         shippingAddress,
         customerName.trim(),
@@ -196,6 +205,8 @@ export async function crearPedido(req, res) {
         paymentMethod,
         estadoPago,
         shippingMethod,
+        'pendiente',
+        shippingCost,
       ],
     );
     const order = orderRows[0];
@@ -267,7 +278,6 @@ const CAMPOS_EDITABLES = [
   'email',
   'phone',
   'payment_method',
-  'payment_status',
   'shipping_method',
 ];
 
@@ -292,10 +302,6 @@ export async function actualizarPedido(req, res) {
     }
   });
 
-  if (nuevo.payment_status && !['pendiente', 'recibido', 'rechazado'].includes(nuevo.payment_status)) {
-    return res.status(400).json({ error: 'Estado de pago inválido.' });
-  }
-
   nuevo.shipping_address = [
     nuevo.customer_name,
     [nuevo.street, nuevo.street_number].filter(Boolean).join(' '),
@@ -306,11 +312,19 @@ export async function actualizarPedido(req, res) {
   ].filter((parte) => parte && String(parte).trim())
     .join('\n');
 
+  nuevo.shipping_cost = Number(COSTOS_ENVIO[nuevo.shipping_method] ?? 0);
+
+  const [subtotalRow] = await consultar(
+    'select coalesce(sum(quantity * unit_price), 0)::numeric as subtotal from public.order_items where order_id = $1',
+    [req.params.id],
+  );
+  nuevo.total = Number(subtotalRow.subtotal) + nuevo.shipping_cost;
+
   const cambios = [];
   const valores = [];
   let contador = 1;
 
-  [...CAMPOS_EDITABLES, 'shipping_address'].forEach((campo) => {
+  [...CAMPOS_EDITABLES, 'shipping_address', 'shipping_cost', 'total'].forEach((campo) => {
     cambios.push(`${campo} = $${contador++}`);
     valores.push(nuevo[campo]);
   });
@@ -367,23 +381,25 @@ export async function eliminarPedido(req, res) {
   }
 }
 
-const ESTADOS_PAGO_VALIDOS = new Set(['pendiente', 'recibido', 'rechazado']);
+const ESTADOS_PAGO_VALIDOS = new Set(['pendiente', 'realizado']);
+const ESTADOS_ENVIO_VALIDOS = new Set(['pendiente', 'enviado']);
 
 export async function actualizarPago(req, res) {
-  const {
-    payment_status: paymentStatus,
-    payment_method: paymentMethod,
-    shipping_method: shippingMethod,
-  } = req.body;
+  const { payment_status: paymentStatus, payment_method: paymentMethod } = req.body;
+
+  if (paymentStatus === undefined && paymentMethod === undefined) {
+    return res.status(400).json({ error: 'No hay cambios para aplicar.' });
+  }
+
+  if (paymentStatus !== undefined && !ESTADOS_PAGO_VALIDOS.has(paymentStatus)) {
+    return res.status(400).json({ error: 'Estado de pago inválido.' });
+  }
 
   const cambios = [];
   const valores = [];
   let contador = 1;
 
   if (paymentStatus !== undefined) {
-    if (!ESTADOS_PAGO_VALIDOS.has(paymentStatus)) {
-      return res.status(400).json({ error: 'Estado de pago inválido.' });
-    }
     cambios.push(`payment_status = $${contador++}`);
     valores.push(paymentStatus);
   }
@@ -393,13 +409,51 @@ export async function actualizarPago(req, res) {
     valores.push(paymentMethod || null);
   }
 
-  if (shippingMethod !== undefined) {
-    cambios.push(`shipping_method = $${contador++}`);
-    valores.push(shippingMethod || null);
+  const { rows } = await pool.query(
+    `update public.orders set ${cambios.join(', ')}, updated_at = now() where id = $${contador} returning *`,
+    [...valores, req.params.id],
+  );
+
+  if (!rows.length) {
+    return res.status(404).json({ error: 'Pedido no encontrado.' });
   }
 
-  if (!cambios.length) {
+  res.json({ data: rows[0] });
+}
+
+export async function actualizarEnvio(req, res) {
+  const { shipping_status: shippingStatus, shipping_method: shippingMethod } = req.body;
+
+  if (shippingStatus === undefined && shippingMethod === undefined) {
     return res.status(400).json({ error: 'No hay cambios para aplicar.' });
+  }
+
+  if (shippingStatus !== undefined && !ESTADOS_ENVIO_VALIDOS.has(shippingStatus)) {
+    return res.status(400).json({ error: 'Estado de envío inválido.' });
+  }
+
+  const cambios = [];
+  const valores = [];
+  let contador = 1;
+
+  if (shippingStatus !== undefined) {
+    cambios.push(`shipping_status = $${contador++}`);
+    valores.push(shippingStatus);
+  }
+
+  if (shippingMethod !== undefined) {
+    const costo = Number(COSTOS_ENVIO[shippingMethod] ?? 0);
+    const [subtotalRow] = await consultar(
+      'select coalesce(sum(quantity * unit_price), 0)::numeric as subtotal from public.order_items where order_id = $1',
+      [req.params.id],
+    );
+
+    cambios.push(`shipping_method = $${contador++}`);
+    valores.push(shippingMethod || null);
+    cambios.push(`shipping_cost = $${contador++}`);
+    valores.push(costo);
+    cambios.push(`total = $${contador++}`);
+    valores.push(Number(subtotalRow.subtotal) + costo);
   }
 
   const { rows } = await pool.query(

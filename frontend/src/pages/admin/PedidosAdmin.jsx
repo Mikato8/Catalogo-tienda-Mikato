@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Button,
   Card,
   Descriptions,
-  Modal,
   Select,
   Table,
   message,
@@ -11,21 +9,10 @@ import {
 import { api } from '../../services/api';
 import { pedidosDemo } from '../../data/demo';
 import { useAuth } from '../../contexts/AuthContext';
-import TimelinePedido from '../../components/TimelinePedido';
-import { ESTADOS_PAGO } from '../../data/pagoEnvio';
-
-const estados = [
-  'pendiente',
-  'confirmado',
-  'en_produccion',
-  'enviado',
-  'entregado',
-  'cancelado',
-];
+import { ESTADOS_ENVIO, ESTADOS_PAGO } from '../../data/pagoEnvio';
 
 export default function PedidosAdmin({ demo = false }) {
   const [orders, setOrders] = useState(demo ? pedidosDemo : []);
-  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
   const headers = useMemo(() => (
@@ -44,55 +31,6 @@ export default function PedidosAdmin({ demo = false }) {
     cargar();
   }, [cargar]);
 
-  async function cambiarEstado(order, status) {
-    const entrada = {
-      status,
-      notes: demo
-        ? 'Actualización de demostración'
-        : `Estado cambiado a ${status}`,
-      created_at: new Date().toISOString(),
-    };
-
-    if (demo) {
-      setOrders((current) => current.map((item) => (
-        item.id === order.id
-          ? {
-            ...item,
-            status,
-            order_tracking: [...(item.order_tracking || []), entrada],
-          }
-          : item
-      )));
-      setSelected((current) => current && {
-        ...current,
-        status,
-        order_tracking: [...(current.order_tracking || []), entrada],
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await api(`/orders/${order.id}/status`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ status, notes: entrada.notes }),
-      });
-      message.success('Estado actualizado y tracking registrado');
-      cargar();
-      setSelected((current) => current && {
-        ...current,
-        status,
-        order_tracking: [...(current.order_tracking || []), entrada],
-      });
-    } catch (error) {
-      message.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function cambiarPago(order, paymentStatus) {
     try {
       await api(`/orders/${order.id}/payment`, {
@@ -101,6 +39,20 @@ export default function PedidosAdmin({ demo = false }) {
         body: JSON.stringify({ payment_status: paymentStatus }),
       });
       message.success('Estado de pago actualizado');
+      cargar();
+    } catch (error) {
+      message.error(error.message);
+    }
+  }
+
+  async function cambiarEnvio(order, shippingStatus) {
+    try {
+      await api(`/orders/${order.id}/shipping`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ shipping_status: shippingStatus }),
+      });
+      message.success('Estado de envío actualizado');
       cargar();
     } catch (error) {
       message.error(error.message);
@@ -138,10 +90,13 @@ export default function PedidosAdmin({ demo = false }) {
             ))}
           </Descriptions.Item>
           <Descriptions.Item label="Pago">{order.payment_method || '—'}</Descriptions.Item>
-          <Descriptions.Item label="Envío">{order.shipping_method || '—'}</Descriptions.Item>
+          <Descriptions.Item label="Envío">
+            {order.shipping_method || '—'}
+            {Number(order.shipping_cost || 0) > 0
+              ? ` (+$${Number(order.shipping_cost).toFixed(2)})`
+              : ''}
+          </Descriptions.Item>
         </Descriptions>
-        <h3>Historial de tracking</h3>
-        <TimelinePedido history={order.order_tracking || []} />
       </div>
     );
   }
@@ -165,24 +120,13 @@ export default function PedidosAdmin({ demo = false }) {
             render: (value) => new Date(value).toLocaleString('es-ES'),
           },
           {
+            title: 'Cliente',
+            dataIndex: 'customer_name',
+          },
+          {
             title: 'Total',
             dataIndex: 'total',
             render: (value) => `$${Number(value).toFixed(2)}`,
-          },
-          {
-            title: 'Estado',
-            dataIndex: 'status',
-            render: (value, order) => (
-              <Select
-                value={value}
-                style={{ minWidth: 150 }}
-                onChange={(status) => cambiarEstado(order, status)}
-                options={estados.map((item) => ({
-                  value: item,
-                  label: item,
-                }))}
-              />
-            ),
           },
           {
             title: 'Pago',
@@ -200,25 +144,22 @@ export default function PedidosAdmin({ demo = false }) {
             ),
           },
           {
-            title: 'Detalle',
-            render: (_, order) => (
-              <Button onClick={() => setSelected(order)}>
-                Ver tracking
-              </Button>
+            title: 'Envío',
+            dataIndex: 'shipping_status',
+            render: (value, order) => (
+              <Select
+                value={value || 'pendiente'}
+                style={{ minWidth: 130 }}
+                onChange={(shippingStatus) => cambiarEnvio(order, shippingStatus)}
+                options={ESTADOS_ENVIO.map((item) => ({
+                  value: item.value,
+                  label: item.label,
+                }))}
+              />
             ),
           },
         ]}
       />
-      <Modal
-        open={Boolean(selected)}
-        title={`Tracking del pedido ${selected?.id?.slice(0, 8)}`}
-        footer={null}
-        onCancel={() => setSelected(null)}
-      >
-        {selected && (
-          <TimelinePedido history={selected.order_tracking || []} />
-        )}
-      </Modal>
     </Card>
   );
 }

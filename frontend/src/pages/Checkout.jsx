@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { vaciar } from '../store/carritoSlice';
 import { useAuth } from '../contexts/AuthContext';
-import { METODOS_ENVIO, METODOS_PAGO } from '../data/pagoEnvio';
+import { METODOS_ENVIO, METODOS_PAGO, costoEnvio } from '../data/pagoEnvio';
 
 export default function Checkout() {
   const items = useSelector((state) => state.carrito);
@@ -12,6 +12,13 @@ export default function Checkout() {
   const { token, usuario } = useAuth();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const shippingMethod = Form.useWatch('shipping_method', form);
+  const costoSeleccionado = costoEnvio(shippingMethod);
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.cantidad,
+    0,
+  );
+  const total = subtotal + costoSeleccionado;
 
   async function enviar(values) {
     try {
@@ -30,10 +37,8 @@ export default function Checkout() {
         }),
       });
 
-      const total = items.reduce(
-        (sum, item) => sum + item.price * item.cantidad,
-        0,
-      );
+      const costo = costoEnvio(values.shipping_method);
+      const totalFinal = subtotal + costo;
 
       const lineas = [
         '*Nuevo pedido - Mikato*',
@@ -47,9 +52,10 @@ export default function Checkout() {
           `• ${item.name} x${item.cantidad} = $${(item.price * item.cantidad).toFixed(2)}`
         )),
         '',
-        `*Total: $${total.toFixed(2)}*`,
+        `Subtotal: $${subtotal.toFixed(2)}`,
+        `Envío (${values.shipping_method}): $${costo.toFixed(2)}`,
         `Pago: ${values.payment_method || 'Sin método'}`,
-        `Envío: ${values.shipping_method || 'Sin método'}`,
+        `*Total: $${totalFinal.toFixed(2)}*`,
       ];
 
       const url = `https://wa.me/523324333262?text=${encodeURIComponent(lineas.join('\n'))}`;
@@ -188,11 +194,20 @@ export default function Checkout() {
             >
               <Select
                 placeholder="Método de envío"
-                options={METODOS_ENVIO.map((item) => ({ value: item, label: item }))}
+                options={METODOS_ENVIO.map((item) => ({
+                  value: item.value,
+                  label: item.costo > 0 ? `${item.label} (+$${item.costo})` : item.label,
+                }))}
               />
             </Form.Item>
           </Col>
         </Row>
+
+        <div style={{ marginBottom: 16 }}>
+          <p>Subtotal: ${subtotal.toFixed(2)}</p>
+          <p>Envío: ${costoSeleccionado.toFixed(2)}</p>
+          <h2>Total: ${total.toFixed(2)}</h2>
+        </div>
 
         <Button htmlType="submit" type="primary" block>
           Confirmar pedido

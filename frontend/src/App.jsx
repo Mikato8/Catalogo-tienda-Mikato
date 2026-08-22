@@ -8,8 +8,6 @@ import Catalogo from './pages/Catalogo';
 import Checkout from './pages/Checkout';
 import DetalleProducto from './pages/DetalleProducto';
 import MisPedidos from './pages/MisPedidos';
-import Tracking from './pages/Tracking';
-
 export default function App() {
   const admin = (
     <RequireAuth>
@@ -42,14 +40,6 @@ export default function App() {
             element={(
               <RequireAuth>
                 <MisPedidos />
-              </RequireAuth>
-            )}
-          />
-          <Route
-            path="/pedidos/:id"
-            element={(
-              <RequireAuth>
-                <Tracking />
               </RequireAuth>
             )}
           />

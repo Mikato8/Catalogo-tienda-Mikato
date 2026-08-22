@@ -6,15 +6,19 @@ export const METODOS_PAGO = [
 ];
 
 export const METODOS_ENVIO = [
-  'Envío a domicilio - Estafeta Terrestre',
-  'Envío a domicilio - DHL',
-  'Recoger en tienda',
+  { value: 'Recoger en tienda', label: 'Recoger en tienda', costo: 0 },
+  { value: 'Envío local', label: 'Envío local', costo: 50 },
+  { value: 'Envío por paquetería', label: 'Envío por paquetería', costo: 120 },
 ];
 
 export const ESTADOS_PAGO = [
   { value: 'pendiente', label: 'Pendiente', color: 'orange' },
-  { value: 'recibido', label: 'Recibido', color: 'green' },
-  { value: 'rechazado', label: 'Rechazado', color: 'red' },
+  { value: 'realizado', label: 'Realizado', color: 'green' },
+];
+
+export const ESTADOS_ENVIO = [
+  { value: 'pendiente', label: 'Pendiente', color: 'orange' },
+  { value: 'enviado', label: 'Enviado', color: 'green' },
 ];
 
 export function etiquetaEstadoPago(value) {
@@ -23,4 +27,16 @@ export function etiquetaEstadoPago(value) {
     label: value,
     color: 'default',
   };
+}
+
+export function etiquetaEstadoEnvio(value) {
+  return ESTADOS_ENVIO.find((item) => item.value === value) || {
+    value,
+    label: value,
+    color: 'default',
+  };
+}
+
+export function costoEnvio(metodo) {
+  return METODOS_ENVIO.find((item) => item.value === metodo)?.costo ?? 0;
 }

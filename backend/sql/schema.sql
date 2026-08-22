@@ -66,8 +66,10 @@ create table if not exists public.orders (
   email text,
   phone text,
   payment_method text,
-  payment_status text not null default 'pendiente' check (payment_status in ('pendiente', 'recibido', 'rechazado')),
+  payment_status text not null default 'pendiente' check (payment_status in ('pendiente', 'realizado')),
   shipping_method text,
+  shipping_status text not null default 'pendiente' check (shipping_status in ('pendiente', 'enviado')),
+  shipping_cost numeric(12, 2) not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

@@ -13,23 +13,14 @@ import {
   Tag,
   message,
 } from 'antd';
-import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import {
+  etiquetaEstadoEnvio,
   etiquetaEstadoPago,
   METODOS_ENVIO,
   METODOS_PAGO,
 } from '../data/pagoEnvio';
-
-const ESTADOS_COLOR = {
-  pendiente: 'gold',
-  confirmado: 'blue',
-  en_produccion: 'geekblue',
-  enviado: 'cyan',
-  entregado: 'green',
-  cancelado: 'red',
-};
 
 export default function MisPedidos() {
   const [orders, setOrders] = useState([]);
@@ -147,20 +138,24 @@ export default function MisPedidos() {
     },
     {
       title: 'Envío',
-      render: (_, order) => (
-        <Space direction="vertical" size={0}>
-          <Tag color={ESTADOS_COLOR[order.status] || 'default'}>{order.status}</Tag>
-          <span>{order.shipping_method || '—'}</span>
-        </Space>
-      ),
+      render: (_, order) => {
+        const estado = etiquetaEstadoEnvio(order.shipping_status);
+        const costo = Number(order.shipping_cost || 0);
+        return (
+          <Space direction="vertical" size={0}>
+            <Tag color={estado.color}>{estado.label}</Tag>
+            <span>
+              {order.shipping_method || '—'}
+              {costo > 0 ? ` (+$${costo.toFixed(2)})` : ''}
+            </span>
+          </Space>
+        );
+      },
     },
     {
       title: 'Acciones',
       render: (_, order) => (
         <Space>
-          <Link to={`/pedidos/${order.id}`}>
-            <Button>Ver tracking</Button>
-          </Link>
           <Button onClick={() => editar(order)}>Editar</Button>
           <Button danger onClick={() => eliminar(order)}>Eliminar</Button>
         </Space>
@@ -242,7 +237,10 @@ export default function MisPedidos() {
             </Col>
             <Col xs={24} md={12}>
               <Form.Item name="shipping_method" label="Método de envío">
-                <Select options={METODOS_ENVIO.map((item) => ({ value: item, label: item }))} />
+                <Select options={METODOS_ENVIO.map((item) => ({
+                  value: item.value,
+                  label: item.costo > 0 ? `${item.label} (+$${item.costo})` : item.label,
+                }))} />
               </Form.Item>
             </Col>
           </Row>
