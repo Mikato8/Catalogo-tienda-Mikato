@@ -34,7 +34,9 @@ export default function Catalogo() {
             <p>
               Mikato son productos elaborados en Guadalajara Jal.
               <br />
-              Whatsapp 3324333262
+              <a href="https://wa.me/523324333262" target="_blank" rel="noreferrer">
+                Whatsapp 3324333262
+              </a>
             </p>
           </div>
         </div>

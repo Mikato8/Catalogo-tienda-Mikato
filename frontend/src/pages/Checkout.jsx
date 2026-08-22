@@ -28,6 +28,30 @@ export default function Checkout() {
           })),
         }),
       });
+
+      const total = items.reduce(
+        (sum, item) => sum + item.price * item.cantidad,
+        0,
+      );
+
+      const lineas = [
+        '*Nuevo pedido - Mikato*',
+        `Cliente: ${values.customer_name}`,
+        `Celular: ${values.phone}`,
+        `Correo: ${values.email}`,
+        `Dirección: ${values.street} ${values.street_number}, ${values.colonia}, ${values.city}, ${values.state} ${values.postal_code}`,
+        '',
+        '*Productos:*',
+        ...items.map((item) => (
+          `• ${item.name} x${item.cantidad} = $${(item.price * item.cantidad).toFixed(2)}`
+        )),
+        '',
+        `*Total: $${total.toFixed(2)}*`,
+      ];
+
+      const url = `https://wa.me/523324333262?text=${encodeURIComponent(lineas.join('\n'))}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+
       dispatch(vaciar());
       message.success('Pedido creado correctamente');
       navigate('/pedidos');
