@@ -9,11 +9,17 @@ const ESTADOS_VALIDOS = new Set([
   'cancelado',
 ]);
 
-const COSTOS_ENVIO = {
-  'Recoger en tienda': 0,
-  'Envío local': 50,
-  'Envío por paquetería': 120,
-};
+async function costoEnvio(metodo) {
+  const rows = await consultar(
+    `select shipping_local_cost, shipping_paqueteria_cost
+     from public.site_settings where id = 1`,
+  );
+  const s = rows[0] || { shipping_local_cost: 0, shipping_paqueteria_cost: 0 };
+
+  if (metodo === 'Envío local') return Number(s.shipping_local_cost || 0);
+  if (metodo === 'Envío por paquetería') return Number(s.shipping_paqueteria_cost || 0);
+  return 0;
+}
 
 export async function listarPedidos(req, res) {
   const orders = await consultar(
@@ -108,7 +114,7 @@ export async function crearPedido(req, res) {
 
   const ESTADOS_PAGO = new Set(['pendiente', 'realizado']);
   const estadoPago = ESTADOS_PAGO.has(paymentStatus) ? paymentStatus : 'pendiente';
-  const shippingCost = Number(COSTOS_ENVIO[shippingMethod] ?? 0);
+  const shippingCost = await costoEnvio(shippingMethod);
 
   if (!items?.length) {
     return res.status(400).json({ error: 'El pedido debe incluir productos.' });
@@ -312,7 +318,7 @@ export async function actualizarPedido(req, res) {
   ].filter((parte) => parte && String(parte).trim())
     .join('\n');
 
-  nuevo.shipping_cost = Number(COSTOS_ENVIO[nuevo.shipping_method] ?? 0);
+  nuevo.shipping_cost = await costoEnvio(nuevo.shipping_method);
 
   const [subtotalRow] = await consultar(
     'select coalesce(sum(quantity * unit_price), 0)::numeric as subtotal from public.order_items where order_id = $1',
@@ -422,9 +428,13 @@ export async function actualizarPago(req, res) {
 }
 
 export async function actualizarEnvio(req, res) {
-  const { shipping_status: shippingStatus, shipping_method: shippingMethod } = req.body;
+  const {
+    shipping_status: shippingStatus,
+    shipping_method: shippingMethod,
+    shipping_cost: shippingCost,
+  } = req.body;
 
-  if (shippingStatus === undefined && shippingMethod === undefined) {
+  if (shippingStatus === undefined && shippingMethod === undefined && shippingCost === undefined) {
     return res.status(400).json({ error: 'No hay cambios para aplicar.' });
   }
 
@@ -442,14 +452,26 @@ export async function actualizarEnvio(req, res) {
   }
 
   if (shippingMethod !== undefined) {
-    const costo = Number(COSTOS_ENVIO[shippingMethod] ?? 0);
+    cambios.push(`shipping_method = $${contador++}`);
+    valores.push(shippingMethod || null);
+  }
+
+  if (shippingCost !== undefined || shippingMethod !== undefined) {
+    let costo;
+    if (shippingCost !== undefined) {
+      costo = Number(shippingCost);
+      if (!Number.isFinite(costo) || costo < 0) {
+        return res.status(400).json({ error: 'Costo de envío inválido.' });
+      }
+    } else {
+      costo = await costoEnvio(shippingMethod);
+    }
+
     const [subtotalRow] = await consultar(
       'select coalesce(sum(quantity * unit_price), 0)::numeric as subtotal from public.order_items where order_id = $1',
       [req.params.id],
     );
 
-    cambios.push(`shipping_method = $${contador++}`);
-    valores.push(shippingMethod || null);
     cambios.push(`shipping_cost = $${contador++}`);
     valores.push(costo);
     cambios.push(`total = $${contador++}`);

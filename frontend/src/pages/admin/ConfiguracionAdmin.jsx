@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button,
   Card,
   ColorPicker,
+  InputNumber,
   Select,
   Space,
   Typography,
@@ -17,7 +18,19 @@ export default function ConfiguracionAdmin() {
   const { tema, setTema } = useTheme();
   const [color, setColor] = useState(tema.primaryColor);
   const [fuente, setFuente] = useState(tema.fontFamily);
+  const [envioLocal, setEnvioLocal] = useState(0);
+  const [envioPaqueteria, setEnvioPaqueteria] = useState(0);
   const [guardando, setGuardando] = useState(false);
+
+  useEffect(() => {
+    api('/settings')
+      .then((response) => {
+        const datos = response.data || {};
+        setEnvioLocal(Number(datos.shipping_local_cost || 0));
+        setEnvioPaqueteria(Number(datos.shipping_paqueteria_cost || 0));
+      })
+      .catch(() => {});
+  }, []);
 
   async function guardar() {
     setGuardando(true);
@@ -29,6 +42,8 @@ export default function ConfiguracionAdmin() {
         body: JSON.stringify({
           primary_color: color,
           font_family: fuente,
+          shipping_local_cost: envioLocal,
+          shipping_paqueteria_cost: envioPaqueteria,
         }),
       });
 
@@ -37,6 +52,8 @@ export default function ConfiguracionAdmin() {
         primaryColor: datos.primary_color,
         fontFamily: datos.font_family,
       });
+      setEnvioLocal(Number(datos.shipping_local_cost || 0));
+      setEnvioPaqueteria(Number(datos.shipping_paqueteria_cost || 0));
       message.success('Configuración guardada y aplicada');
     } catch (error) {
       message.error(error.message);
@@ -79,6 +96,36 @@ export default function ConfiguracionAdmin() {
                 label: item.label,
               }))}
             />
+          </div>
+        </div>
+
+        <div>
+          <Typography.Text strong>Costo de envío</Typography.Text>
+          <div style={{ marginTop: 8, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <Typography.Text>Envío local</Typography.Text>
+              <div style={{ marginTop: 4 }}>
+                <InputNumber
+                  value={envioLocal}
+                  onChange={(valor) => setEnvioLocal(Number(valor || 0))}
+                  min={0}
+                  prefix="$"
+                  style={{ width: 160 }}
+                />
+              </div>
+            </div>
+            <div>
+              <Typography.Text>Envío por paquetería</Typography.Text>
+              <div style={{ marginTop: 4 }}>
+                <InputNumber
+                  value={envioPaqueteria}
+                  onChange={(valor) => setEnvioPaqueteria(Number(valor || 0))}
+                  min={0}
+                  prefix="$"
+                  style={{ width: 160 }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

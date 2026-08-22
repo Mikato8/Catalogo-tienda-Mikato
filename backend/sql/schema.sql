@@ -113,6 +113,8 @@ create table if not exists public.site_settings (
   id integer primary key default 1 check (id = 1),
   primary_color text not null default '#006877',
   font_family text not null default 'Inter',
+  shipping_local_cost numeric(12, 2) not null default 0,
+  shipping_paqueteria_cost numeric(12, 2) not null default 0,
   updated_at timestamptz not null default now()
 );
 

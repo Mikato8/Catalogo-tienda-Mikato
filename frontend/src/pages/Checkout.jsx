@@ -1,10 +1,11 @@
 import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { vaciar } from '../store/carritoSlice';
 import { useAuth } from '../contexts/AuthContext';
-import { METODOS_ENVIO, METODOS_PAGO, costoEnvio } from '../data/pagoEnvio';
+import { METODOS_ENVIO, METODOS_PAGO, costoEnvioSegunSettings } from '../data/pagoEnvio';
 
 export default function Checkout() {
   const items = useSelector((state) => state.carrito);
@@ -12,8 +13,16 @@ export default function Checkout() {
   const { token, usuario } = useAuth();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const [settings, setSettings] = useState({});
+
+  useEffect(() => {
+    api('/settings')
+      .then((response) => setSettings(response.data || {}))
+      .catch(() => {});
+  }, []);
+
   const shippingMethod = Form.useWatch('shipping_method', form);
-  const costoSeleccionado = costoEnvio(shippingMethod);
+  const costoSeleccionado = costoEnvioSegunSettings(shippingMethod, settings);
   const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.cantidad,
     0,
@@ -37,7 +46,7 @@ export default function Checkout() {
         }),
       });
 
-      const costo = costoEnvio(values.shipping_method);
+      const costo = costoEnvioSegunSettings(values.shipping_method, settings);
       const totalFinal = subtotal + costo;
 
       const lineas = [
@@ -196,7 +205,7 @@ export default function Checkout() {
                 placeholder="Método de envío"
                 options={METODOS_ENVIO.map((item) => ({
                   value: item.value,
-                  label: item.costo > 0 ? `${item.label} (+$${item.costo})` : item.label,
+                  label: item.label,
                 }))}
               />
             </Form.Item>

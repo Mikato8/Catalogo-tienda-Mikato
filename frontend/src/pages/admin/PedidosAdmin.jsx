@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Button,
   Card,
   Descriptions,
+  InputNumber,
   Select,
   Table,
   message,
@@ -14,6 +16,7 @@ import { ESTADOS_ENVIO, ESTADOS_PAGO } from '../../data/pagoEnvio';
 export default function PedidosAdmin({ demo = false }) {
   const [orders, setOrders] = useState(demo ? pedidosDemo : []);
   const [loading, setLoading] = useState(false);
+  const [costos, setCostos] = useState({});
   const { token } = useAuth();
   const headers = useMemo(() => (
     token ? { Authorization: `Bearer ${token}` } : {}
@@ -59,6 +62,20 @@ export default function PedidosAdmin({ demo = false }) {
     }
   }
 
+  async function cambiarCosto(order, costo) {
+    try {
+      await api(`/orders/${order.id}/shipping`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ shipping_cost: Number(costo || 0) }),
+      });
+      message.success('Costo de envío actualizado');
+      cargar();
+    } catch (error) {
+      message.error(error.message);
+    }
+  }
+
   function detalle(order) {
     const tieneDatosEnvio = order.customer_name || order.street || order.city || order.colonia;
     const envio = tieneDatosEnvio ? (
@@ -91,10 +108,26 @@ export default function PedidosAdmin({ demo = false }) {
           </Descriptions.Item>
           <Descriptions.Item label="Pago">{order.payment_method || '—'}</Descriptions.Item>
           <Descriptions.Item label="Envío">
-            {order.shipping_method || '—'}
-            {Number(order.shipping_cost || 0) > 0
-              ? ` (+$${Number(order.shipping_cost).toFixed(2)})`
-              : ''}
+            <div>
+              <div>{order.shipping_method || '—'}</div>
+              <InputNumber
+                addonBefore="$"
+                min={0}
+                value={costos[order.id] ?? Number(order.shipping_cost || 0)}
+                onChange={(valor) => setCostos((actual) => ({
+                  ...actual,
+                  [order.id]: Number(valor || 0),
+                }))}
+                style={{ marginTop: 8 }}
+              />
+              <Button
+                size="small"
+                style={{ marginLeft: 8 }}
+                onClick={() => cambiarCosto(order, costos[order.id] ?? Number(order.shipping_cost || 0))}
+              >
+                Guardar
+              </Button>
+            </div>
           </Descriptions.Item>
         </Descriptions>
       </div>

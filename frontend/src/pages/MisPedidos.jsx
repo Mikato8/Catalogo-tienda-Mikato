@@ -239,7 +239,7 @@ export default function MisPedidos() {
               <Form.Item name="shipping_method" label="Método de envío">
                 <Select options={METODOS_ENVIO.map((item) => ({
                   value: item.value,
-                  label: item.costo > 0 ? `${item.label} (+$${item.costo})` : item.label,
+                  label: item.label,
                 }))} />
               </Form.Item>
             </Col>

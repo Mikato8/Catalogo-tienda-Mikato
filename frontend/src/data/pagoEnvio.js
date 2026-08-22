@@ -6,9 +6,9 @@ export const METODOS_PAGO = [
 ];
 
 export const METODOS_ENVIO = [
-  { value: 'Recoger en tienda', label: 'Recoger en tienda', costo: 0 },
-  { value: 'Envío local', label: 'Envío local', costo: 50 },
-  { value: 'Envío por paquetería', label: 'Envío por paquetería', costo: 120 },
+  { value: 'Recoger en tienda', label: 'Recoger en tienda' },
+  { value: 'Envío local', label: 'Envío local' },
+  { value: 'Envío por paquetería', label: 'Envío por paquetería' },
 ];
 
 export const ESTADOS_PAGO = [
@@ -37,6 +37,8 @@ export function etiquetaEstadoEnvio(value) {
   };
 }
 
-export function costoEnvio(metodo) {
-  return METODOS_ENVIO.find((item) => item.value === metodo)?.costo ?? 0;
+export function costoEnvioSegunSettings(metodo, settings = {}) {
+  if (metodo === 'Envío local') return Number(settings.shipping_local_cost || 0);
+  if (metodo === 'Envío por paquetería') return Number(settings.shipping_paqueteria_cost || 0);
+  return 0;
 }
