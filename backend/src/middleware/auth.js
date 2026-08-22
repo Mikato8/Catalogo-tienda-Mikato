@@ -20,12 +20,10 @@ export function verificarJWT(req, res, next) {
 
 export async function exigirAdmin(req, res, next) {
   try {
-    const rows = req.user?.role === 'admin'
-      ? [{ id: req.user.id }]
-      : await consultar(
-        'select id from public.users where id = $1 and role = $2',
-        [req.user.id, 'admin'],
-      );
+    const rows = await consultar(
+      'select id from public.users where id = $1 and role = $2',
+      [req.user.id, 'admin'],
+    );
 
     if (!rows.length) {
       return res.status(403).json({ error: 'Se requieren permisos de administrador.' });
