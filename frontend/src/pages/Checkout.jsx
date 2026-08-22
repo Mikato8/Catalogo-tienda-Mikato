@@ -1,9 +1,10 @@
-import { Button, Card, Col, Form, Input, Row, message } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { vaciar } from '../store/carritoSlice';
 import { useAuth } from '../contexts/AuthContext';
+import { METODOS_ENVIO, METODOS_PAGO } from '../data/pagoEnvio';
 
 export default function Checkout() {
   const items = useSelector((state) => state.carrito);
@@ -47,6 +48,8 @@ export default function Checkout() {
         )),
         '',
         `*Total: $${total.toFixed(2)}*`,
+        `Pago: ${values.payment_method || 'Sin método'}`,
+        `Envío: ${values.shipping_method || 'Sin método'}`,
       ];
 
       const url = `https://wa.me/523324333262?text=${encodeURIComponent(lineas.join('\n'))}`;
@@ -160,6 +163,33 @@ export default function Checkout() {
               rules={[{ required: true, message: 'Ingresá el CP' }]}
             >
               <Input placeholder="C.P." />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="payment_method"
+              label="Método de pago"
+              rules={[{ required: true, message: 'Seleccioná el método de pago' }]}
+            >
+              <Select
+                placeholder="Método de pago"
+                options={METODOS_PAGO.map((item) => ({ value: item, label: item }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="shipping_method"
+              label="Método de envío"
+              rules={[{ required: true, message: 'Seleccioná el método de envío' }]}
+            >
+              <Select
+                placeholder="Método de envío"
+                options={METODOS_ENVIO.map((item) => ({ value: item, label: item }))}
+              />
             </Form.Item>
           </Col>
         </Row>

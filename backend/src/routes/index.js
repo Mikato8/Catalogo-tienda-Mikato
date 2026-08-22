@@ -20,8 +20,11 @@ import {
   listarUsuarios,
 } from '../controllers/usuarios.js';
 import {
+  actualizarPago,
+  actualizarPedido,
   cambiarEstado,
   crearPedido,
+  eliminarPedido,
   listarPedidos,
   listarPedidosAdmin,
   tracking,
@@ -76,8 +79,11 @@ router.delete('/admin/users/:id', verificarJWT, exigirAdmin, asyncHandler(elimin
 // Pedidos
 router.get('/orders', verificarJWT, asyncHandler(listarPedidos));
 router.post('/orders', verificarJWT, asyncHandler(crearPedido));
+router.patch('/orders/:id', verificarJWT, asyncHandler(actualizarPedido));
+router.delete('/orders/:id', verificarJWT, asyncHandler(eliminarPedido));
 router.get('/tracking/:id', verificarJWT, asyncHandler(tracking));
 router.patch('/orders/:id/status', verificarJWT, exigirAdmin, asyncHandler(cambiarEstado));
+router.patch('/orders/:id/payment', verificarJWT, exigirAdmin, asyncHandler(actualizarPago));
 router.get('/admin/orders', verificarJWT, exigirAdmin, asyncHandler(listarPedidosAdmin));
 
 export default router;

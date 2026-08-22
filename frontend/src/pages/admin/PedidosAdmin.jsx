@@ -12,6 +12,7 @@ import { api } from '../../services/api';
 import { pedidosDemo } from '../../data/demo';
 import { useAuth } from '../../contexts/AuthContext';
 import TimelinePedido from '../../components/TimelinePedido';
+import { ESTADOS_PAGO } from '../../data/pagoEnvio';
 
 const estados = [
   'pendiente',
@@ -92,6 +93,20 @@ export default function PedidosAdmin({ demo = false }) {
     }
   }
 
+  async function cambiarPago(order, paymentStatus) {
+    try {
+      await api(`/orders/${order.id}/payment`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ payment_status: paymentStatus }),
+      });
+      message.success('Estado de pago actualizado');
+      cargar();
+    } catch (error) {
+      message.error(error.message);
+    }
+  }
+
   function detalle(order) {
     const tieneDatosEnvio = order.customer_name || order.street || order.city || order.colonia;
     const envio = tieneDatosEnvio ? (
@@ -122,6 +137,8 @@ export default function PedidosAdmin({ demo = false }) {
               </div>
             ))}
           </Descriptions.Item>
+          <Descriptions.Item label="Pago">{order.payment_method || '—'}</Descriptions.Item>
+          <Descriptions.Item label="Envío">{order.shipping_method || '—'}</Descriptions.Item>
         </Descriptions>
         <h3>Historial de tracking</h3>
         <TimelinePedido history={order.order_tracking || []} />
@@ -163,6 +180,21 @@ export default function PedidosAdmin({ demo = false }) {
                 options={estados.map((item) => ({
                   value: item,
                   label: item,
+                }))}
+              />
+            ),
+          },
+          {
+            title: 'Pago',
+            dataIndex: 'payment_status',
+            render: (value, order) => (
+              <Select
+                value={value || 'pendiente'}
+                style={{ minWidth: 130 }}
+                onChange={(paymentStatus) => cambiarPago(order, paymentStatus)}
+                options={ESTADOS_PAGO.map((item) => ({
+                  value: item.value,
+                  label: item.label,
                 }))}
               />
             ),

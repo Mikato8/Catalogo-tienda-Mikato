@@ -95,7 +95,13 @@ export async function crearPedido(req, res) {
     postal_code: postalCode,
     email,
     phone,
+    payment_method: paymentMethod = null,
+    payment_status: paymentStatus = 'pendiente',
+    shipping_method: shippingMethod = null,
   } = req.body;
+
+  const ESTADOS_PAGO = new Set(['pendiente', 'recibido', 'rechazado']);
+  const estadoPago = ESTADOS_PAGO.has(paymentStatus) ? paymentStatus : 'pendiente';
 
   if (!items?.length) {
     return res.status(400).json({ error: 'El pedido debe incluir productos.' });
@@ -171,8 +177,8 @@ export async function crearPedido(req, res) {
 
     const { rows: orderRows } = await client.query(
       `insert into public.orders
-        (user_id, total, status, shipping_address, customer_name, street, street_number, colonia, city, state, postal_code, email, phone)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning *`,
+        (user_id, total, status, shipping_address, customer_name, street, street_number, colonia, city, state, postal_code, email, phone, payment_method, payment_status, shipping_method)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) returning *`,
       [
         req.user.id,
         total,
@@ -187,6 +193,9 @@ export async function crearPedido(req, res) {
         postalCode.trim(),
         email.trim(),
         phone.trim(),
+        paymentMethod,
+        estadoPago,
+        shippingMethod,
       ],
     );
     const order = orderRows[0];
@@ -245,4 +254,162 @@ export async function cambiarEstado(req, res) {
   );
 
   res.json({ data: data[0] });
+}
+
+const CAMPOS_EDITABLES = [
+  'customer_name',
+  'street',
+  'street_number',
+  'colonia',
+  'city',
+  'state',
+  'postal_code',
+  'email',
+  'phone',
+  'payment_method',
+  'payment_status',
+  'shipping_method',
+];
+
+export async function actualizarPedido(req, res) {
+  const [order] = await consultar(
+    'select * from public.orders where id = $1 and user_id = $2',
+    [req.params.id, req.user.id],
+  );
+
+  if (!order) {
+    return res.status(404).json({ error: 'Pedido no encontrado.' });
+  }
+
+  if (!['pendiente', 'confirmado'].includes(order.status)) {
+    return res.status(400).json({ error: 'Solo se pueden editar pedidos pendientes o confirmados.' });
+  }
+
+  const nuevo = { ...order };
+  CAMPOS_EDITABLES.forEach((campo) => {
+    if (req.body[campo] !== undefined) {
+      nuevo[campo] = req.body[campo];
+    }
+  });
+
+  if (nuevo.payment_status && !['pendiente', 'recibido', 'rechazado'].includes(nuevo.payment_status)) {
+    return res.status(400).json({ error: 'Estado de pago inválido.' });
+  }
+
+  nuevo.shipping_address = [
+    nuevo.customer_name,
+    [nuevo.street, nuevo.street_number].filter(Boolean).join(' '),
+    nuevo.colonia,
+    [nuevo.city, nuevo.state, nuevo.postal_code].filter(Boolean).join(', '),
+    nuevo.email ? `Correo: ${nuevo.email}` : null,
+    nuevo.phone ? `Celular: ${nuevo.phone}` : null,
+  ].filter((parte) => parte && String(parte).trim())
+    .join('\n');
+
+  const cambios = [];
+  const valores = [];
+  let contador = 1;
+
+  [...CAMPOS_EDITABLES, 'shipping_address'].forEach((campo) => {
+    cambios.push(`${campo} = $${contador++}`);
+    valores.push(nuevo[campo]);
+  });
+
+  const { rows } = await pool.query(
+    `update public.orders set ${cambios.join(', ')}, updated_at = now() where id = $${contador} returning *`,
+    [...valores, req.params.id],
+  );
+
+  res.json({ data: rows[0] });
+}
+
+export async function eliminarPedido(req, res) {
+  const [order] = await consultar(
+    'select id, status from public.orders where id = $1 and user_id = $2',
+    [req.params.id, req.user.id],
+  );
+
+  if (!order) {
+    return res.status(404).json({ error: 'Pedido no encontrado.' });
+  }
+
+  if (!['pendiente', 'confirmado'].includes(order.status)) {
+    return res.status(400).json({ error: 'Solo se pueden eliminar pedidos pendientes o confirmados.' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('begin');
+
+    const { rows: items } = await client.query(
+      'select product_id, quantity from public.order_items where order_id = $1',
+      [req.params.id],
+    );
+
+    for (const item of items) {
+      if (item.product_id) {
+        await client.query(
+          'update public.products set stock = stock + $1 where id = $2',
+          [item.quantity, item.product_id],
+        );
+      }
+    }
+
+    await client.query('delete from public.orders where id = $1', [req.params.id]);
+    await client.query('commit');
+    return res.status(204).end();
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+const ESTADOS_PAGO_VALIDOS = new Set(['pendiente', 'recibido', 'rechazado']);
+
+export async function actualizarPago(req, res) {
+  const {
+    payment_status: paymentStatus,
+    payment_method: paymentMethod,
+    shipping_method: shippingMethod,
+  } = req.body;
+
+  const cambios = [];
+  const valores = [];
+  let contador = 1;
+
+  if (paymentStatus !== undefined) {
+    if (!ESTADOS_PAGO_VALIDOS.has(paymentStatus)) {
+      return res.status(400).json({ error: 'Estado de pago inválido.' });
+    }
+    cambios.push(`payment_status = $${contador++}`);
+    valores.push(paymentStatus);
+  }
+
+  if (paymentMethod !== undefined) {
+    cambios.push(`payment_method = $${contador++}`);
+    valores.push(paymentMethod || null);
+  }
+
+  if (shippingMethod !== undefined) {
+    cambios.push(`shipping_method = $${contador++}`);
+    valores.push(shippingMethod || null);
+  }
+
+  if (!cambios.length) {
+    return res.status(400).json({ error: 'No hay cambios para aplicar.' });
+  }
+
+  const { rows } = await pool.query(
+    `update public.orders set ${cambios.join(', ')}, updated_at = now() where id = $${contador} returning *`,
+    [...valores, req.params.id],
+  );
+
+  if (!rows.length) {
+    return res.status(404).json({ error: 'Pedido no encontrado.' });
+  }
+
+  res.json({ data: rows[0] });
 }
