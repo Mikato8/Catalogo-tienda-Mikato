@@ -1,6 +1,6 @@
-# ERP Mikato
+#  Mikato
 
-ERP Mikato es una plataforma de comercio electrónico y gestión operativa para
+ Mikato es una plataforma de comercio electrónico y gestión operativa para
 productos producidos y comercializados por Mikato. Combina un catálogo público,
 carrito, checkout, seguimiento de pedidos y un panel de administración para
 productos, categorías y estados de pedidos.
