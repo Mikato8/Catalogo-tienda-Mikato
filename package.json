@@ -10,5 +10,8 @@
     "start": "npm run start --workspace backend",
     "install:all": "npm install"
   },
-  "devDependencies": {"concurrently": "^9.1.2"}
+  "devDependencies": {"concurrently": "^9.1.2"},
+  "overrides": {
+    "shell-quote": "1.11.0"
+  }
 }
