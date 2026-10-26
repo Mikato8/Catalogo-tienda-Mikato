@@ -3,6 +3,18 @@ CHANGELOG ERP Mikato
 
 Registro de cambios del proyecto ERP-Mikato.
 
+[2026-10-26] Dependencias de seguridad: multer 2.5.0 y body-parser 1.20.9
+-----------------------------------------------------------------------
+- `multer` pasa de ^2.4.0 a ^2.5.0. Corrige CVE-2026-113872 (GHSA-q7qp-rjg7-q26m):
+  una petición con `fileFilter` asíncrono podía tumbar el proceso. La app no usa
+  `fileFilter`, pero se sube igual.
+- `body-parser` pasa de 1.20.8 a 1.20.9. Corrige CVE-2026-111181
+  (GHSA-27r3-jxmh-p828): bytes extra tras un cuerpo comprimido terminaban el
+  proceso. Llegaba como transitiva de Express 4 y quedaba fuera del alcance del
+  bot de Hostinger; ahora se declara en `backend/package.json` y se fija en
+  `overrides` del paquete raíz.
+- `npm audit` (con y sin devDependencies): 0 vulnerabilidades.
+
 [2026-10-26] Limpieza de service workers heredados en el dominio
 ---------------------------------------------------------------
 - `backend/src/server.js` sirve `/sw.js` con un service worker de

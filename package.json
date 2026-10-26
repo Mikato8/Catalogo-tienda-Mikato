@@ -2,7 +2,10 @@
   "name": "erp-mikato",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["frontend", "backend"],
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
     "build": "npm install && npm run build --workspace frontend",
@@ -10,8 +13,11 @@
     "start": "npm run start --workspace backend",
     "install:all": "npm install"
   },
-  "devDependencies": {"concurrently": "^9.1.2"},
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
   "overrides": {
-    "shell-quote": "1.11.0"
+    "shell-quote": "1.11.0",
+    "body-parser": "1.20.9"
   }
 }
