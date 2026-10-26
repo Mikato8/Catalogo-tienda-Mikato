@@ -1,0 +1,39 @@
+
+> erp-mikato@1.0.0 build
+> npm install && npm run build --workspace frontend
+
+
+up to date, audited 370 packages in 2s
+
+60 packages are looking for funding
+  run `npm fund` for details
+
+3 high severity vulnerabilities
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+npm warn install-scripts 2 packages have install scripts not yet covered by allowScripts:
+npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
+npm warn install-scripts   fsevents@2.3.3 (install: (install scripts present))
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+
+> erp-mikato-frontend@1.0.0 build
+> vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 1479 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.85 kB │ gzip:   0.44 kB
+dist/assets/index-Dw5KHdSk.css      7.58 kB │ gzip:   2.18 kB
+dist/assets/index-CA5IL31C.js   1,189.44 kB │ gzip: 374.26 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.09s

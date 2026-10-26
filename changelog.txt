@@ -3,6 +3,16 @@ CHANGELOG ERP Mikato
 
 Registro de cambios del proyecto ERP-Mikato.
 
+[2026-10-26] Limpieza de service workers heredados en el dominio
+---------------------------------------------------------------
+- `backend/src/server.js` sirve `/sw.js` con un service worker de
+  autodestrucción (sin precache): borra los caches, se desregistra y recarga
+  las pestañas. El navegador comprueba `sw.js` sin pasar por el worker anterior,
+  así que el reemplazo siempre llega.
+- Motivo: la PWA de Porcicultura llegó a registrarse en mikato.com.mx y su
+  Workbox seguía sirviendo su `index.html` cacheado por encima del catálogo.
+- Respuesta con `Cache-Control: no-store` y `Service-Worker-Allowed: /`.
+
 [2026-08-10] v1.1.1 — Logging a archivo (errores y eventos)
 --------------------------------------------------------------
 - Nuevo módulo backend/src/lib/logger.js (sin dependencias): escribe en JSON a
