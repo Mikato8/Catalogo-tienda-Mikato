@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { pool } from '../config/db.js';
+import { anchoSolicitado, varianteDeImagen } from '../lib/imagenes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const uploadsDir = path.resolve(__dirname, '../../uploads');
@@ -26,6 +27,23 @@ export async function subirImagen(req, res) {
 }
 
 export async function obtenerImagen(req, res) {
+  // ?w=800 devuelve una variante redimensionada en JPEG (mucho más liviana que el
+  // original en PNG). Sin ?w se conserva el comportamiento anterior.
+  const ancho = anchoSolicitado(req.query.w);
+
+  if (ancho) {
+    try {
+      const variante = await varianteDeImagen(req.params.id, ancho);
+      if (variante) {
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+        return res.type(variante.mime_type).send(variante.data);
+      }
+    } catch (error) {
+      // Si la conversión falla se sirve el original: mejor pesado que roto.
+      console.error('No se pudo generar la variante de imagen:', error.message);
+    }
+  }
+
   const { rows } = await pool.query(
     'select data, mime_type from public.images where id = $1',
     [req.params.id],

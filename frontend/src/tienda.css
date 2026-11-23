@@ -158,7 +158,44 @@
 .t-pie ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 14px; }
 .t-pie a { text-decoration: none; color: var(--t-tinta-2); }
 .t-pie a:hover { color: var(--t-azul); text-decoration: underline; }
+.t-pie a.t-btn, .t-pie a.t-btn:hover { color: #fff; text-decoration: none; }
 .t-pie__legal { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--t-linea); display: flex; justify-content: space-between; gap: 16px; font-size: 13px; color: var(--t-tinta-3); flex-wrap: wrap; }
+
+
+/* Ficha de producto */
+.t-migas { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--t-tinta-3); padding-block: 16px; flex-wrap: wrap; }
+.t-migas a { color: var(--t-tinta-2); text-decoration: none; }
+.t-migas a:hover { color: var(--t-azul); text-decoration: underline; }
+.t-ficha { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; padding-bottom: 40px; }
+.t-ficha__media { border: 1px solid var(--t-linea); border-radius: var(--t-r3); overflow: hidden; background: var(--t-fondo); aspect-ratio: 1; }
+.t-ficha__media img { width: 100%; height: 100%; object-fit: cover; }
+.t-ficha__datos { display: flex; flex-direction: column; gap: 10px; }
+.t-ficha__titulo { font-size: 32px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.t-ficha__precio { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+.t-ficha__precio strong { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+.t-ficha__precio span { font-size: 13px; color: var(--t-tinta-3); }
+.t-ficha__acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-block: 8px; }
+.t-ficha__puntos { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.t-ficha__puntos li { position: relative; padding-inline-start: 22px; font-size: 14px; line-height: 21px; color: var(--t-tinta-2); }
+.t-ficha__puntos li::before { content: ''; position: absolute; left: 4px; top: 9px; width: 8px; height: 8px; border-radius: 999px; background: var(--t-oro); }
+.t-ficha__specs { display: grid; gap: 0; margin: 16px 0 0; border-top: 1px solid var(--t-linea); }
+.t-ficha__specs div { display: grid; grid-template-columns: 140px 1fr; gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--t-linea); font-size: 14px; }
+.t-ficha__specs dt { color: var(--t-tinta-3); }
+.t-ficha__specs dd { margin: 0; color: var(--t-tinta); }
+
+/* Página de arena */
+.t-arena { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding-block: 32px; }
+.t-arena__lista { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 12px; }
+.t-arena__lista li { display: flex; gap: 10px; font-size: 15px; line-height: 22px; color: var(--t-tinta-2); }
+.t-arena__lista .material-symbols-outlined { color: var(--t-azul); font-size: 20px; }
+@media (max-width: 1080px) {
+  .t-arena { grid-template-columns: 1fr; gap: 24px; }
+}
+@media (max-width: 860px) {
+  .t-ficha { grid-template-columns: 1fr; gap: 20px; }
+  .t-ficha__titulo { font-size: 26px; }
+  .t-ficha__specs div { grid-template-columns: 120px 1fr; }
+}
 
 /* Buscador vacío */
 .t-vacio { border: 1px dashed var(--t-linea-fuerte); border-radius: var(--t-r2); padding: 32px; text-align: center; color: var(--t-tinta-2); display: grid; gap: 12px; justify-items: center; }

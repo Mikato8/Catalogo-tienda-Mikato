@@ -100,7 +100,7 @@ export default function Navegacion() {
                 </Link>
               </li>
             ))}
-            <li><a href={WHATSAPP} target="_blank" rel="noreferrer">Arena para gatos</a></li>
+            <li><Link to="/arena" {...(location.pathname === '/arena' ? { 'aria-current': 'page' } : {})}>Arena para gatos</Link></li>
             <li><a href={WHATSAPP} target="_blank" rel="noreferrer">NEART PETS</a></li>
             <li><a href="https://mikatoestilistascaninos.com" target="_blank" rel="noreferrer">CRM para estéticas caninas</a></li>
             <li>

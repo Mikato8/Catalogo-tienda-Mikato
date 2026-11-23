@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { productosDemo } from '../data/demo';
 import ProductoCard from '../components/ProductoCard';
+import { conAncho } from '../lib/imagenes';
 
 const WHATSAPP = 'https://wa.me/523324333262';
 const CATEGORIAS_BASE = ['Shampoo', 'Acondicionador', 'Desenredante', 'Perfume'];
@@ -50,7 +51,7 @@ export default function Catalogo() {
       <div className="t-contenedor t-hero">
         <section className="t-banner" aria-labelledby="hero-titulo">
           {portada?.image_url && (
-            <img className="t-banner__foto" src={portada.image_url} alt={portada.name} />
+            <img className="t-banner__foto" src={conAncho(portada.image_url, 900)} alt={portada.name} />
           )}
           <div className="t-banner__texto">
             <p className="t-banner__etiqueta">Hecho en Guadalajara</p>
@@ -105,7 +106,7 @@ export default function Catalogo() {
               return (
                 <Link key={nombre} className="t-categoria" to={`/?cat=${encodeURIComponent(nombre)}`}>
                   {conFoto
-                    ? <img src={conFoto.image_url} alt={`Productos de ${nombre}`} loading="lazy" />
+                    ? <img src={conAncho(conFoto.image_url, 240)} alt={`Productos de ${nombre}`} loading="lazy" decoding="async" />
                     : <span className="t-categoria__vacia">Ver</span>}
                   <span>{nombre}</span>
                 </Link>

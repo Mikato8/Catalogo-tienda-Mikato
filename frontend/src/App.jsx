@@ -2,6 +2,7 @@ import { Link, Route, Routes } from 'react-router-dom';
 import Navegacion from './components/Navegacion';
 import { RequireAdmin, RequireAuth } from './components/Proteccion';
 import Acceso from './pages/Acceso';
+import Arena from './pages/Arena';
 import AdminLayout from './pages/admin/AdminLayout';
 import Carrito from './pages/Carrito';
 import Catalogo from './pages/Catalogo';
@@ -33,6 +34,7 @@ export default function App() {
               </RequireAuth>
             )}
           />
+          <Route path="/arena" element={<Arena />} />
           <Route path="/login" element={<Acceso />} />
           <Route path="/registro" element={<Acceso registro />} />
           <Route
