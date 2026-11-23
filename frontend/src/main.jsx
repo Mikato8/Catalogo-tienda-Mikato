@@ -7,6 +7,7 @@ import { store } from './store/index';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './styles.css';
+import './tienda.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
