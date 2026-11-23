@@ -17,7 +17,7 @@ export default function Navegacion() {
     <nav className="nav">
       <div className="nav-inner">
         <Link className="nav-logo" to="/">
-          <img alt="Mikato Logo" src="/logo.jpg" />
+          <img alt="Mikato Logo" src="/logo.png" />
         </Link>
 
         <div className="nav-links">
