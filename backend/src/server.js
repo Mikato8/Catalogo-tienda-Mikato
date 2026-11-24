@@ -75,6 +75,15 @@ app.get('/sw.js', (_req, res) => {
   res.send(serviceWorkerAutodestruct);
 });
 
+// La antigua ruta /estetica debe llevar al sitio de estética canina.
+// Si se deja caer en la SPA de la tienda, React no tiene esa ruta y la página
+// queda en blanco (solo cabecera y pie).
+const esteticaUrl = (process.env.ESTETICA_URL || 'https://mikatoestilistascaninos.com').replace(/\/$/, '');
+app.get(/^\/estetica(?:\/.*)?$/, (req, res) => {
+  const resto = req.originalUrl.replace(/^\/estetica/, '') || '/';
+  return res.redirect(301, `${esteticaUrl}${resto}`);
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
